@@ -1,0 +1,42 @@
+from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Message
+from aiogram.filters import StateFilter
+
+from keyboards.cancel_keyboard import get_cancel_keyboard
+from states import Global
+
+from main import server
+from utils.ai_tools.image_extender import ImageExtender
+from utils.file_data import FileData
+from utils.filter import CallbackFilter
+
+router = Router()
+
+
+@router.callback_query(CallbackFilter(data='non-context-action.extend-image'), StateFilter(None))
+async def on_extend_started(cb: CallbackQuery, state: FSMContext):
+    await cb.answer()
+    await cb.message.answer(server.get_string("non-context-action.extend-image.prompt_ask"), reply_markup=get_cancel_keyboard())
+    await state.set_state(Global.image_extending)
+
+
+@router.message(Global.image_extending, F.photo)
+async def on_generate(msg: Message, state: FSMContext):
+    await state.set_state(Global.busy)
+    new_msg = await msg.answer(server.get_string("non-context-action.extend-image.in-process"))
+
+    source_file = await server.download_file_by_id(FileData(msg.photo[-1]).get_data(), 'png')
+    prepared_file = await server.create_file('PNG')
+    mask_file = await server.create_file('PNG')
+
+    image_url = await ImageExtender.extend_image(source_file, prepared_file, mask_file)
+
+    await server.delete_file(source_file)
+    await server.delete_file(prepared_file)
+    await server.delete_file(mask_file)
+
+    await msg.answer_photo(photo=image_url)
+    await new_msg.delete()
+    await server.reset_state_message(msg)
+    await state.clear()

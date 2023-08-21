@@ -1,0 +1,31 @@
+start: |
+  Hi! Welcome to the best AI bot.
+
+cancel: ❌ Cancel
+busy: Bot is busy now.
+all-canceled: Everything canceled! Now you can choose what you want to do.
+state-reset: Now, you can do something else.
+
+non-context-action.generate-image: 🎨 Generate image
+non-context-action.generate-image.prompt_ask: Now enter prompt. What would you like to see on your image?
+non-context-action.generate-image.in-process: Image generation in process...
+non-context-action.generate-image.invalid-prompt: |
+  It seems that your request was unacceptable, we could not create an image.
+  Send new prompt or cancel action.
+non-context-action.generate-image.invalid-prompt-type: Please send *text* prompt for image generation.
+
+non-context-action.edit-image: 🖌️ Edit image
+non-context-action.edit-image.prompt_ask: Now send prompt and image for editing.
+non-context-action.edit-image.invalid_content_type: Please send text prompt and image for editing.
+non-context-action.edit-image.prompt-set: Prompt has been set.
+non-context-action.edit-image.image-set: Image for editing has been set.
+non-context-action.edit-image.image-downloading: Image downloading...
+non-context-action.edit-image.in-process: Image editing in process...
+
+non-context-action.extend-image: 🖌️ Extend image
+non-context-action.extend-image.prompt_ask: Now send image for extending.
+non-context-action.extend-image.in-process: Extending image...
+
+non-context-action.non_context_voice.action-select: What do you wish to do with this voice?
+non-context-action.non_context_voice.transcribe: 📝 Transcribe
+non-context-action.non_context_voice.message-error: Failed to read source message, maybe it was deleted?
