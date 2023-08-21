@@ -1,3 +1,3 @@
-docker stop ai_chat_bot2
-docker rm ai_chat_bot2
-docker run -it -d --restart=always --name=ai_chat_bot2 $(docker build -q .)
+docker stop sonia_ai_project
+docker rm sonia_ai_project
+docker run -it -d --restart=always --name=sonia_ai_project $(docker build -q .)
