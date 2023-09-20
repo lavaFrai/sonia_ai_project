@@ -15,3 +15,12 @@ async def get_non_context_voice_keyboard(file_data):
     keyboard.button(text=server.get_string("non-context-action.non_context_voice.transcribe"),
                     callback_data="non_context_voice.transcribe")
     return keyboard.as_markup()
+
+
+async def get_non_context_text_keyboard(data):
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=server.get_string("non-context-action.non_context_text.continue"),
+                    callback_data="non_context_text.continue")
+    keyboard.button(text=server.get_string("non-context-action.non_context_text.reduce"),
+                    callback_data="non_context_text.reduce")
+    return keyboard.as_markup()

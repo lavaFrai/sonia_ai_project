@@ -1,10 +1,12 @@
 start: |
   Hi! Welcome to the best AI bot.
+  Choose one of the actions or send a text, voice photo or video message.
 
 cancel: ❌ Cancel
 busy: Bot is busy now.
 all-canceled: Everything canceled! Now you can choose what you want to do.
 state-reset: Now, you can do something else.
+generation-in-progress: Generation in progress...
 
 non-context-action.generate-image: 🎨 Generate image
 non-context-action.generate-image.prompt_ask: Now enter prompt. What would you like to see on your image?
@@ -29,3 +31,8 @@ non-context-action.extend-image.in-process: Extending image...
 non-context-action.non_context_voice.action-select: What do you wish to do with this voice?
 non-context-action.non_context_voice.transcribe: 📝 Transcribe
 non-context-action.non_context_voice.message-error: Failed to read source message, maybe it was deleted?
+
+non-context-action.non_context_text.action-select: What do you wish to do with this text?
+non-context-action.non_context_text.continue:  ✍ Continue
+non-context-action.non_context_text.additional-action: You can continue or do something else with the received text.
+non-context-action.non_context_text.reduce: 📃 Reduce
