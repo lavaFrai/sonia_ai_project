@@ -5,7 +5,7 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from keyboards.non_context_action import get_non_context_voice_keyboard
+from keyboards.non_context_action import get_non_context_voice_keyboard, get_non_context_text_keyboard
 from main import server
 from states import Global
 from utils.file_data import FileData
@@ -34,7 +34,10 @@ async def on_non_context_voice_transcribe(cb: CallbackQuery, state: FSMContext):
                 model='whisper-1',
                 file=open(file, 'rb')
             )
-            await source_message.reply(response['text'])
+            new_msg = await source_message.reply(response['text'])
+
+            await new_msg.reply(server.get_string("non-context-action.non_context_text.action-select"),
+                                reply_markup=await get_non_context_text_keyboard(new_msg.text))
         finally:
             await state.clear()
             await cb.answer()
