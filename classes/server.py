@@ -87,3 +87,10 @@ class Server(metaclass=Singleton):
     async def delete_file(file_path):
         if os.path.exists(file_path):
             os.remove(file_path)
+
+    async def get_user_by_message(self, msg: Message):
+        from models.user import User
+        user, created = User.get_or_create(id=msg.from_user.id)
+        if created:
+            user = User.get(id=msg.from_user.id)
+        return user

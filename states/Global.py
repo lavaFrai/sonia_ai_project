@@ -6,3 +6,4 @@ class Global(StatesGroup):
     image_generation = State()
     image_editing = State()
     image_extending = State()
+    dialog = State()

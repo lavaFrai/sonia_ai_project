@@ -1,4 +1,5 @@
 {
   "telegram_token": "<telegram_token>",
-  "openai_token": "<openai_token>"
+  "openai_token": "<openai_token>",
+  "admin": []
 }

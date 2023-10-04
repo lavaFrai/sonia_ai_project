@@ -6,15 +6,15 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from keyboards.non_context_action import get_non_context_voice_keyboard, get_non_context_text_keyboard
+from keyboards.non_context_action import get_non_context_text_keyboard
 from main import server
 from states import Global
-from utils.file_data import FileData
+from utils.openai_utils import chatgpt_generate_one_message
 
 router = Router()
 
 
-@router.message(lambda x: x.content_type == ContentType.TEXT, StateFilter(None))
+@router.message(lambda x: x.content_type == ContentType.TEXT, StateFilter(None), lambda x: not x.text.startswith('/'))
 async def on_non_context_text(msg: Message, state: FSMContext):
     await msg.reply(server.get_string("non-context-action.non_context_text.action-select"),
                     reply_markup=await get_non_context_text_keyboard(msg.text))
@@ -68,14 +68,12 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext):
             # message_length_in_tokens = num_tokens_from_string(source_message.text, "p50k_base")
             new_msg = await source_message.reply(text=server.get_string("generation-in-progress"))
 
-            response = await openai.ChatCompletion.acreate(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You should shorten the texts that are sent to you, leaving only the most important in them."},
-                    {"role": "user", "content": source_message.text}
-                ]
+            text = await chatgpt_generate_one_message(
+                "You should shorten the texts that are sent to you, leaving only the most important in the text. "
+                "The result must be in the same language as the original.",
+                source_message.text
             )
-            text = response["choices"][0]["message"]["content"]
+
             await new_msg.delete()
             await source_message.reply(text=text)
         finally:
@@ -83,7 +81,7 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext):
             await cb.answer()
 
 
-@router.callback_query(F.data.startswith("non_context_text.reduce"), StateFilter(None))
+@router.callback_query(F.data.startswith("non_context_text.check_grammar"), StateFilter(None))
 async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext):
     source_message = cb.message.reply_to_message
     if source_message is None:
@@ -96,14 +94,12 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext):
             # message_length_in_tokens = num_tokens_from_string(source_message.text, "p50k_base")
             new_msg = await source_message.reply(text=server.get_string("generation-in-progress"))
 
-            response = await openai.ChatCompletion.acreate(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You should shorten the texts that are sent to you, leaving only the most important in them."},
-                    {"role": "user", "content": source_message.text}
-                ]
+            text = await chatgpt_generate_one_message(
+                "Correct the spelling, syntax and grammar of this text in source language of message. "
+                "Write anything and it will correct your Spelling and Grammar.",
+                source_message.text
             )
-            text = response["choices"][0]["message"]["content"]
+
             await new_msg.delete()
             await source_message.reply(text=text)
         finally:
