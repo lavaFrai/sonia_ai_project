@@ -8,6 +8,7 @@ async def get_non_context_action():
     keyboard.button(text=server.get_string("non-context-action.generate-image"), callback_data="non-context-action.generate-image")
     keyboard.button(text=server.get_string("non-context-action.extend-image"), callback_data="non-context-action.extend-image")
     keyboard.button(text=server.get_string("dialog-start"), callback_data="dialog.start")
+    keyboard.adjust(2)
     return keyboard.as_markup()
 
 

@@ -44,5 +44,7 @@ non-context-action.non_context_text.reduce: 📃 Reduce
 
 dialog-start: 💬 Start dialog
 dialog-stop: ❌ Stop dialog
+dialog-resume: 🔁 Resume dialog
 dialog-started: Dialog started, you can message and bot will answer!
-dialog-stopped: Dialog stopped
+dialog-stopped: Dialog stopped.
+dialog-resumed: Dialog resumed, you can message and bot will answer, given the previous context!

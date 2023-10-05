@@ -1,11 +1,12 @@
 from aiogram import Router
-from aiogram.enums import ChatAction, ParseMode
+from aiogram.enums import ChatAction, ParseMode, ContentType
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.methods import SendChatAction
 from aiogram.types import Message, CallbackQuery
 
-from keyboards.chat_dialog_keyboards import get_dialog_stop_keyboard
+from keyboards.chat_dialog_keyboards import get_dialog_stop_keyboard, get_dialog_resume_keyboard
 from main import server
 from models.chat_dialog import ChatDialog
 from models.chat_message import ChatMessage
@@ -30,13 +31,13 @@ async def on_command(msg: Message, state: FSMContext):
 @router.callback_query(CallbackFilter(data='dialog.start'), StateFilter(None))
 async def on_start_dialog(cb: CallbackQuery, state: FSMContext):
     await state.set_state(Global.dialog)
-    dialog = ChatDialog.create(user_id=cb.from_user.id)
+    created_message = await cb.message.answer(server.get_string("dialog-started"), reply_markup=await get_dialog_stop_keyboard())
+    dialog = ChatDialog.create(user_id=cb.from_user.id, last_bot_message=created_message.message_id)
     with open("conf/system-prompt.txt") as f:
         system_prompt = f.read()
     ChatMessage.create(role="system", text=system_prompt, dialog_id=dialog.id)
     await state.set_data({"id": dialog.id})
     await cb.answer()
-    await cb.message.answer(server.get_string("dialog-started"), reply_markup=await get_dialog_stop_keyboard())
 
 
 @router.message(Command("stop_dialog"), Global.dialog)
@@ -46,23 +47,47 @@ async def on_command(msg: Message, state: FSMContext):
 
 
 @router.callback_query(CallbackFilter(data='dialog.stop'), Global.dialog)
-async def on_command(cb: CallbackQuery, state: FSMContext):
+async def on_stop_dialog(cb: CallbackQuery, state: FSMContext):
+    dialog_id = (await state.get_data())['id']
+    dialog = ChatDialog.get(id=dialog_id)
+
+    await server.delete_reply_markup_if_possible(cb.message.chat.id, dialog.last_bot_message)
+
     await state.clear()
     await cb.answer()
-    await cb.message.reply(server.get_string("dialog-stopped"))
+    await cb.message.reply(server.get_string("dialog-stopped"), reply_markup=await get_dialog_resume_keyboard(dialog_id))
     await server.reset_state_message(cb.message)
 
 
-@router.message(Global.dialog)
+@router.callback_query(CallbackFilter(starts_with='dialog.resume'), StateFilter(None))
+async def on_resume_dialog(cb: CallbackQuery, state: FSMContext):
+    await server.delete_reply_markup_if_possible(cb.message.chat.id, cb.message.message_id)
+    await state.set_state(Global.dialog)
+    dialog_id = int(cb.data.split('.')[2])
+    dialog = ChatDialog.get(id=dialog_id)
+    await state.set_data({'id': str(dialog_id)})
+    created_message = await cb.message.reply(server.get_string('dialog-resumed'), reply_markup=await get_dialog_stop_keyboard())
+    dialog.last_bot_message = created_message.message_id
+    dialog.save()
+    await cb.answer()
+
+
+@router.message(Global.dialog, lambda x: x.content_type in [ContentType.TEXT])
 async def on_new_message(msg: Message, state: FSMContext):
     text = msg.text
     await state.set_state(Global.busy)
 
     await server.bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
     dialog_id = (await state.get_data())['id']
+    dialog: ChatDialog = ChatDialog.get(id=dialog_id)
+
+    await server.delete_reply_markup_if_possible(msg.chat.id, dialog.last_bot_message)
+
     ChatMessage.create(text=text, dialog_id=dialog_id)
     new_message = await openai_utils.chatgpt_continue_dialog(history=await ChatDialog.get_dialog_history(dialog_id))
     ChatMessage.create(role=new_message['role'], text=new_message['content'], dialog_id=dialog_id)
-    await msg.reply(new_message['content'], parse_mode=None, reply_markup=await get_dialog_stop_keyboard())
+    created_msg = await msg.answer(new_message['content'], parse_mode=None, reply_markup=await get_dialog_stop_keyboard())
+    dialog.last_bot_message = created_msg.message_id
+    dialog.save()
 
     await state.set_state(Global.dialog)

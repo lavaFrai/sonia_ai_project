@@ -10,6 +10,7 @@ class ChatDialog(peewee.Model):
     id = peewee.IntegerField(unique=True, primary_key=True)
     user_id = peewee.IntegerField(null=False)
     name = peewee.TextField(null=True)
+    last_bot_message = peewee.IntegerField(default=0)
 
     class Meta:
         database = server.db

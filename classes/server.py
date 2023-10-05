@@ -7,6 +7,7 @@ import openai as openai
 import PIL.Image
 from aiogram import Dispatcher
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message, Downloadable, File
 from peewee import SqliteDatabase
 
@@ -94,3 +95,11 @@ class Server(metaclass=Singleton):
         if created:
             user = User.get(id=msg.from_user.id)
         return user
+
+    async def delete_reply_markup_if_possible(self, chat_id, message_id):
+        try:
+            if message_id != 0:
+                await self.bot.edit_message_reply_markup(chat_id=chat_id,
+                                                         message_id=message_id, reply_markup=None)
+        except TelegramBadRequest:
+            pass
