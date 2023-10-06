@@ -1,9 +1,14 @@
+language: 🇺🇸 English
+welcome_and_choose_language: |
+  Hello! Please choose your language.
+
+language_has_been_set: The language has been set to English.
 start: |
   Hi! Welcome to the best AI bot.
-  Choose one of the actions or send a text, voice photo or video message.
+  Choose one of the actions or send a text, voice or video message and choose actions with them.
 
 cancel: ❌ Cancel
-busy: Bot is busy now.
+busy: ⚠️ Bot is busy now.
 all-canceled: Everything canceled! Now you can choose what you want to do.
 state-reset: Now, you can do something else.
 generation-in-progress: Generation in progress...
@@ -41,6 +46,9 @@ non-context-action.non_context_text.action-select: What do you wish to do with t
 non-context-action.non_context_text.continue:  ✍ Continue
 non-context-action.non_context_text.additional-action: You can continue or do something else with the received text.
 non-context-action.non_context_text.reduce: 📃 Reduce
+
+non-context-action.non_context_video_note.action-select: What do you wish to do with this video note?
+non-context-action.non_context_video_note.transcribe-audio: 📝 Transcribe audio
 
 dialog-start: 💬 Start dialog
 dialog-stop: ❌ Stop dialog

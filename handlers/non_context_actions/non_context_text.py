@@ -8,6 +8,7 @@ from aiogram.types import CallbackQuery, Message
 
 from keyboards.non_context_action import get_non_context_text_keyboard
 from main import server
+from models.user import User
 from states import Global
 from utils.openai_utils import chatgpt_generate_one_message
 
@@ -15,9 +16,11 @@ router = Router()
 
 
 @router.message(lambda x: x.content_type == ContentType.TEXT, StateFilter(None), lambda x: not x.text.startswith('/'))
-async def on_non_context_text(msg: Message, state: FSMContext):
-    await msg.reply(server.get_string("non-context-action.non_context_text.action-select"),
-                    reply_markup=await get_non_context_text_keyboard(msg.text))
+async def on_non_context_text(msg: Message):
+    user = User.get_by_message(msg)
+
+    await msg.reply(user.get_string("non-context-action.non_context_text.action-select"),
+                    reply_markup=await get_non_context_text_keyboard(msg.text, user))
 
 
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
@@ -30,10 +33,12 @@ def num_tokens_from_string(string: str, encoding_name: str) -> int:
 
 @router.callback_query(F.data.startswith("non_context_text.continue"), StateFilter(None))
 async def on_non_context_text_continue(cb: CallbackQuery, state: FSMContext):
+    user = User.get_by_callback(cb)
+
     source_message = cb.message.reply_to_message
     if source_message is None:
         await cb.answer()
-        await cb.message.answer(server.get_string("non-context-action.non_context_voice.message-error"))
+        await cb.message.answer(user.get_string("non-context-action.non_context_voice.message-error"))
         return
     else:
         await state.set_state(Global.busy)
@@ -47,7 +52,7 @@ async def on_non_context_text_continue(cb: CallbackQuery, state: FSMContext):
                 temperature=0.3
             )
             text = source_message.text + completion["choices"][0]["text"]
-            new_msg = await source_message.reply(text=text)
+            await source_message.reply(text=text)
             # await new_msg.reply(text=server.get_string("non-context-action.non_context_text.additional-action"),
             #                     reply_markup=await get_non_context_text_keyboard(text))
         finally:
@@ -57,16 +62,18 @@ async def on_non_context_text_continue(cb: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("non_context_text.reduce"), StateFilter(None))
 async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext):
+    user = User.get_by_callback(cb)
+
     source_message = cb.message.reply_to_message
     if source_message is None:
         await cb.answer()
-        await cb.message.answer(server.get_string("non-context-action.non_context_voice.message-error"))
+        await cb.message.answer(user.get_string("non-context-action.non_context_voice.message-error"))
         return
     else:
         await state.set_state(Global.busy)
         try:
             # message_length_in_tokens = num_tokens_from_string(source_message.text, "p50k_base")
-            new_msg = await source_message.reply(text=server.get_string("generation-in-progress"))
+            new_msg = await source_message.reply(text=user.get_string("generation-in-progress"))
 
             text = await chatgpt_generate_one_message(
                 "You should shorten the texts that are sent to you, leaving only the most important in the text. "

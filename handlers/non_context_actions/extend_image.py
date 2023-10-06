@@ -4,6 +4,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.filters import StateFilter
 
 from keyboards.cancel_keyboard import get_cancel_keyboard
+from models.user import User
 from states import Global
 
 from main import server
@@ -16,15 +17,19 @@ router = Router()
 
 @router.callback_query(CallbackFilter(data='non-context-action.extend-image'), StateFilter(None))
 async def on_extend_started(cb: CallbackQuery, state: FSMContext):
+    user = User.get_by_callback(cb)
+
     await cb.answer()
-    await cb.message.answer(server.get_string("non-context-action.extend-image.prompt_ask"), reply_markup=get_cancel_keyboard())
+    await cb.message.answer(user.get_string("non-context-action.extend-image.prompt_ask"), reply_markup=get_cancel_keyboard(user))
     await state.set_state(Global.image_extending)
 
 
 @router.message(Global.image_extending, F.photo)
 async def on_generate(msg: Message, state: FSMContext):
+    user = User.get_by_message(msg)
+
     await state.set_state(Global.busy)
-    new_msg = await msg.answer(server.get_string("non-context-action.extend-image.in-process"))
+    new_msg = await msg.answer(user.get_string("non-context-action.extend-image.in-process"))
 
     source_file = await server.download_file_by_id(FileData(msg.photo[-1]).get_data(), 'png')
     prepared_file = await server.create_file('PNG')

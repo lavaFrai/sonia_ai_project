@@ -60,8 +60,14 @@ class Server(metaclass=Singleton):
             return "<Locale undefined>"
 
     async def reset_state_message(self, msg: Message):
+        from models.user import User
+        user = User.get_by_message(msg)
         from keyboards.non_context_action import get_non_context_action
-        await msg.answer(self.get_string("state-reset"), reply_markup=await get_non_context_action())
+        await msg.answer(user.get_string("state-reset"), reply_markup=await get_non_context_action(user))
+
+    async def reset_state_message_no_reply(self, chat, user):
+        from keyboards.non_context_action import get_non_context_action
+        await self.bot.send_message(chat, user.get_string("state-reset"), reply_markup=await get_non_context_action(user))
 
     @staticmethod
     async def create_file(ex=''):
