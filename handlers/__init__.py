@@ -10,4 +10,5 @@ handlers_names = [
     'non_context_actions.non_context_voice',
     'non_context_actions.non_context_video_note',
     'non_context_actions.non_context_text',
+    'admin.diagnostics',
 ]
