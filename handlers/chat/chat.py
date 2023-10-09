@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router
 from aiogram.enums import ChatAction, ContentType
 from aiogram.filters import Command, StateFilter
@@ -84,6 +86,11 @@ async def on_resume_dialog(cb: CallbackQuery, state: FSMContext):
 
 
 async def dialog_next_message(state, msg, message_text):
+    async def send_typing():
+        while True:
+            await server.bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
+            await asyncio.sleep(1)
+
     await state.set_state(Global.busy)
 
     await server.bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
@@ -95,7 +102,13 @@ async def dialog_next_message(state, msg, message_text):
     await server.delete_reply_markup_if_possible(msg.chat.id, dialog.last_bot_message)
 
     ChatMessage.create(text=message_text, dialog_id=dialog_id)
-    new_message = await openai_utils.chatgpt_continue_dialog(history=await ChatDialog.get_dialog_history(dialog_id))
+
+    tasks = [send_typing(), openai_utils.chatgpt_continue_dialog(history=await ChatDialog.get_dialog_history(dialog_id))]
+
+    new_message, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+    new_message = new_message.pop().result()
+    pending.pop().cancel()
+
     ChatMessage.create(role=new_message['role'], text=new_message['content'], dialog_id=dialog_id)
     created_msg = await msg.answer(new_message['content'], parse_mode=None,
                                    reply_markup=await get_dialog_stop_keyboard(user))
