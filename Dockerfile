@@ -7,7 +7,7 @@ RUN apk update
 RUN apk upgrade
 RUN apk add --no-cache ffmpeg
 RUN apk add build-base linux-headers
-RUN rm -r /opt/app
+RUN rm -r /opt/tmp
 
 RUN python3 -m pip install -r requirements.txt
 
