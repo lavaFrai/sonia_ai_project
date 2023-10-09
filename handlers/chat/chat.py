@@ -15,7 +15,7 @@ from states import Global
 from utils import openai_utils
 from utils.file_data import FileData
 from utils.filter import CallbackFilter
-from utils.openai_utils import whisper_transcribe_voice
+from utils.openai_utils import whisper_transcribe_voice, whisper_transcribe_voice_in_video
 
 router = Router()
 
@@ -86,10 +86,6 @@ async def on_resume_dialog(cb: CallbackQuery, state: FSMContext):
 
 
 async def dialog_next_message(state, msg, message_text):
-    async def send_typing():
-        while True:
-            await server.bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
-            await asyncio.sleep(1)
 
     await state.set_state(Global.busy)
 
@@ -103,11 +99,10 @@ async def dialog_next_message(state, msg, message_text):
 
     ChatMessage.create(text=message_text, dialog_id=dialog_id)
 
-    tasks = [send_typing(), openai_utils.chatgpt_continue_dialog(history=await ChatDialog.get_dialog_history(dialog_id))]
-
-    new_message, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-    new_message = new_message.pop().result()
-    pending.pop().cancel()
+    new_message = await server.await_with_typing_status(
+        openai_utils.chatgpt_continue_dialog(history=await ChatDialog.get_dialog_history(dialog_id)),
+        msg.chat.id
+    )
 
     ChatMessage.create(role=new_message['role'], text=new_message['content'], dialog_id=dialog_id)
     created_msg = await msg.answer(new_message['content'], parse_mode=None,
@@ -126,8 +121,27 @@ async def on_new_message(msg: Message, state: FSMContext):
 
 @router.message(Global.dialog, lambda x: x.content_type in [ContentType.VOICE])
 async def on_new_message(msg: Message, state: FSMContext):
+    dialog_id = (await state.get_data())['id']
+    dialog = ChatDialog.get(id=dialog_id)
+    await server.delete_reply_markup_if_possible(msg.chat.id, dialog.last_bot_message)
+    await state.set_state(Global.busy)
+
     file = await server.download_file_by_id(FileData(msg.voice).get_data(), "mp3")
     text = await whisper_transcribe_voice(open(file, 'rb'))
-    await server.delete_file(file)
+    # await server.delete_file(file)
+
+    await dialog_next_message(state, msg, text)
+
+
+@router.message(Global.dialog, lambda x: x.content_type in [ContentType.VIDEO_NOTE])
+async def on_new_message(msg: Message, state: FSMContext):
+    dialog_id = (await state.get_data())['id']
+    dialog = ChatDialog.get(id=dialog_id)
+    await server.delete_reply_markup_if_possible(msg.chat.id, dialog.last_bot_message)
+    await state.set_state(Global.busy)
+
+    file = await server.download_file_by_id(FileData(msg.video_note).get_data(), "mp4")
+    text = await whisper_transcribe_voice_in_video(file)
+    # await server.delete_file(file)
 
     await dialog_next_message(state, msg, text)

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os.path
 import uuid
@@ -6,7 +7,7 @@ from pathlib import Path
 import openai as openai
 import PIL.Image
 from aiogram import Dispatcher
-from aiogram.enums import ParseMode
+from aiogram.enums import ParseMode, ChatAction
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message, Downloadable, File
 from peewee import SqliteDatabase
@@ -109,3 +110,15 @@ class Server(metaclass=Singleton):
                                                          message_id=message_id, reply_markup=None)
         except TelegramBadRequest:
             pass
+
+    async def await_with_typing_status(self, coroutine, chat_id, status=ChatAction.TYPING):
+        async def send_typing():
+            while True:
+                await self.bot.send_chat_action(chat_id, status)
+                await asyncio.sleep(1)
+
+        tasks = [send_typing(), coroutine]
+
+        new_message, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        pending.pop().cancel()
+        return new_message.pop().result()

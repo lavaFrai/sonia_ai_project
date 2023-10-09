@@ -1,4 +1,7 @@
 import openai
+from moviepy.video.io.VideoFileClip import VideoFileClip
+
+from main import server
 
 
 async def chatgpt_generate_one_message(system_prompt: str, user_prompt: str) -> str:
@@ -25,4 +28,21 @@ async def whisper_transcribe_voice(file: open):
         model='whisper-1',
         file=file
     )
+    return response['text']
+
+
+async def whisper_transcribe_voice_in_video(file: str):
+    video = VideoFileClip(file)
+    audio_file = await server.create_file(ex='mp3')
+    audio = video.audio
+    audio.write_audiofile(audio_file)
+
+    audio.close()
+    video.close()
+
+    response = await openai.Audio.atranscribe(
+        model='whisper-1',
+        file=open(file, 'rb')
+    )
+    await server.delete_file(audio_file)
     return response['text']

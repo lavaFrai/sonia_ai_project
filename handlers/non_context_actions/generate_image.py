@@ -1,5 +1,6 @@
 import openai
 from aiogram import Router, F
+from aiogram.enums import ChatAction
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -34,11 +35,12 @@ async def on_generate(msg: Message, state: FSMContext):
     new_msg = await msg.answer(user.get_string("non-context-action.generate-image.in-process"))
 
     try:
-        response = await openai.Image.acreate(
+        response = openai.Image.acreate(
             prompt=msg.text,
             n=1,
             size='512x512'
         )
+        response = await server.await_with_typing_status(response, msg.chat.id, ChatAction.UPLOAD_PHOTO)
         image_url = response['data'][0]['url']
     except openai.error.InvalidRequestError:
         await msg.reply(user.get_string("non-context-action.generate-image.invalid-prompt"), reply_markup=get_cancel_keyboard(user))

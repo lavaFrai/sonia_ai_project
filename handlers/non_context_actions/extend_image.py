@@ -1,4 +1,5 @@
 from aiogram import Router, F
+from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.filters import StateFilter
@@ -35,7 +36,8 @@ async def on_generate(msg: Message, state: FSMContext):
     prepared_file = await server.create_file('PNG')
     mask_file = await server.create_file('PNG')
 
-    image_url = await ImageExtender.extend_image(source_file, prepared_file, mask_file)
+    image_url = ImageExtender.extend_image(source_file, prepared_file, mask_file)
+    image_url = await server.await_with_typing_status(image_url, msg.chat.id, ChatAction.UPLOAD_PHOTO)
 
     await server.delete_file(source_file)
     await server.delete_file(prepared_file)

@@ -4,11 +4,14 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from keyboards.non_context_action import get_non_context_video_note_keyboard
+from keyboards.non_context_action import get_non_context_video_note_keyboard, get_non_context_text_keyboard
 from main import server
 from models.user import User
 from states import Global
 from utils.file_data import FileData
+from moviepy.editor import VideoFileClip
+
+from utils.openai_utils import whisper_transcribe_voice, whisper_transcribe_voice_in_video
 
 router = Router()
 
@@ -32,15 +35,16 @@ async def on_non_context_voice_transcribe(cb: CallbackQuery, state: FSMContext):
         return
     await state.set_state(Global.busy)
     try:
-        file = await server.download_file_by_id(FileData(source_message.voice).get_data(), "mp4")
-        # response = await openai.Audio.atranscribe(
-        #    model='whisper-1',
-        #    file=open(file, 'rb')
-        # )
-        # new_msg = await source_message.reply(response['text'])
+        video_file = await server.download_file_by_id(FileData(source_message.video_note).get_data(), "mp4")
 
-        # await new_msg.reply(server.get_string("non-context-action.non_context_text.action-select"),
-        #                    reply_markup=await get_non_context_text_keyboard(new_msg.text))
+        text = await server.await_with_typing_status(
+            whisper_transcribe_voice_in_video(video_file),
+            source_message.chat.id
+        )
+        new_msg = await source_message.reply(text)
+
+        await new_msg.reply(user.get_string("non-context-action.non_context_text.action-select"),
+                            reply_markup=await get_non_context_text_keyboard(new_msg.text, user))
     finally:
         await state.clear()
         await cb.answer()
