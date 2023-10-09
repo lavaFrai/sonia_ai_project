@@ -11,7 +11,9 @@ from models.chat_message import ChatMessage
 from models.user import User
 from states import Global
 from utils import openai_utils
+from utils.file_data import FileData
 from utils.filter import CallbackFilter
+from utils.openai_utils import whisper_transcribe_voice
 
 router = Router()
 
@@ -81,24 +83,38 @@ async def on_resume_dialog(cb: CallbackQuery, state: FSMContext):
     await cb.answer()
 
 
-@router.message(Global.dialog, lambda x: x.content_type in [ContentType.TEXT])
-async def on_new_message(msg: Message, state: FSMContext):
-    user = User.get_by_message(msg)
-
-    text = msg.text
+async def dialog_next_message(state, msg, message_text):
     await state.set_state(Global.busy)
 
     await server.bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
     dialog_id = (await state.get_data())['id']
     dialog: ChatDialog = ChatDialog.get(id=dialog_id)
 
+    user = User.get_by_message(msg)
+
     await server.delete_reply_markup_if_possible(msg.chat.id, dialog.last_bot_message)
 
-    ChatMessage.create(text=text, dialog_id=dialog_id)
+    ChatMessage.create(text=message_text, dialog_id=dialog_id)
     new_message = await openai_utils.chatgpt_continue_dialog(history=await ChatDialog.get_dialog_history(dialog_id))
     ChatMessage.create(role=new_message['role'], text=new_message['content'], dialog_id=dialog_id)
-    created_msg = await msg.answer(new_message['content'], parse_mode=None, reply_markup=await get_dialog_stop_keyboard(user))
+    created_msg = await msg.answer(new_message['content'], parse_mode=None,
+                                   reply_markup=await get_dialog_stop_keyboard(user))
     dialog.last_bot_message = created_msg.message_id
     dialog.save()
 
     await state.set_state(Global.dialog)
+
+
+@router.message(Global.dialog, lambda x: x.content_type in [ContentType.TEXT])
+async def on_new_message(msg: Message, state: FSMContext):
+    text = msg.text
+    await dialog_next_message(state, msg, text)
+
+
+@router.message(Global.dialog, lambda x: x.content_type in [ContentType.VOICE])
+async def on_new_message(msg: Message, state: FSMContext):
+    file = await server.download_file_by_id(FileData(msg.voice).get_data(), "mp3")
+    text = await whisper_transcribe_voice(open(file, 'rb'))
+    await server.delete_file(file)
+
+    await dialog_next_message(state, msg, text)

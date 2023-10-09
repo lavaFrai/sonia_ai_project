@@ -18,3 +18,11 @@ async def chatgpt_continue_dialog(history: dict) -> dict:
         messages=history
     )
     return response["choices"][0]["message"]
+
+
+async def whisper_transcribe_voice(file: open):
+    response = await openai.Audio.atranscribe(
+        model='whisper-1',
+        file=file
+    )
+    return response['text']
