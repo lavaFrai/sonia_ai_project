@@ -7,7 +7,10 @@ start: |
   Hi! Welcome to the best AI bot.
   Choose one of the actions or send a text, voice or video message and choose actions with them.
 
-cancel: ❌ Cancel
+
+
+openai.error.server-unavailable:cancel: [❌ Error, servers are overloaded. Please, try later]
+
 busy: ⚠️ Bot is busy now.
 all-canceled: Everything canceled! Now you can choose what you want to do.
 state-reset: Now, you can do something else.

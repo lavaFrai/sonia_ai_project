@@ -1,3 +1,6 @@
+import datetime
+import time
+
 import openai
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
@@ -15,11 +18,15 @@ async def chatgpt_generate_one_message(system_prompt: str, user_prompt: str) -> 
     return response["choices"][0]["message"]["content"]
 
 
-async def chatgpt_continue_dialog(history: dict) -> dict:
-    response = await openai.ChatCompletion.acreate(
-        model="gpt-3.5-turbo-16k",
-        messages=history
-    )
+async def chatgpt_continue_dialog(history: list) -> dict:
+    history[0]['content'] = history[0]['content'].replace('%time%', datetime.datetime.now().strftime('%Y %B %d %H:%M:%S'))
+    try:
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo-16k",
+            messages=history
+        )
+    except openai.error.ServiceUnavailableError:
+        return server.get_string('openai.error.server-unavailable')
     return response["choices"][0]["message"]
 
 
