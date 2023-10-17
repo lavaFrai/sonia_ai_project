@@ -1,6 +1,5 @@
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
@@ -39,3 +38,8 @@ async def on_language_set(cb: CallbackQuery, state: FSMContext):
 
     await cb.message.answer(user.get_string("start"), reply_markup=await get_non_context_action(user))
     await state.clear()
+
+
+@router.message(Command("language"))
+async def on_start(msg: Message, state: FSMContext):
+    await msg.answer(server.get_string("welcome_and_choose_language"), reply_markup=get_language_list_keyboard())

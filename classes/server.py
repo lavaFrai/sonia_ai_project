@@ -4,16 +4,17 @@ import os.path
 import uuid
 from pathlib import Path
 
-import openai as openai
 import PIL.Image
+import aiogram
+import openai as openai
 from aiogram import Dispatcher
 from aiogram.enums import ParseMode, ChatAction
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import Message, Downloadable, File
+from aiogram.types import Message, File
 from peewee import SqliteDatabase
+from playhouse.cockroachdb import CockroachDatabase
 
 from classes.config import Config
-import aiogram
 from handlers import handlers_names
 from utils.i18n import I18n
 from utils.singleton import Singleton
@@ -25,9 +26,16 @@ class Server(metaclass=Singleton):
         self.logger.info("initializing server")
         self.logger.debug(self)
         self.i18n = I18n()
-        self.db = SqliteDatabase('db.sqlite')
 
         self.config = Config()
+
+        if self.config.postgresql.use:
+            self.db = CockroachDatabase(self.config.postgresql.url)
+            self.logger.warning("Using postgresql db")
+        else:
+            self.logger.warning("Using deprecated sqlite db")
+            self.db = SqliteDatabase('db.sqlite')
+
         self.bot = aiogram.Bot(self.config.telegram_token, parse_mode=ParseMode.MARKDOWN)
 
         self.dispatcher = None
