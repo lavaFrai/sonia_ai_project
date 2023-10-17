@@ -7,7 +7,7 @@ from utils.migration import do_migration_for
 
 @do_migration_for(server.db)
 class ChatDialog(peewee.Model):
-    id = peewee.IntegerField(unique=True, primary_key=True)
+    id = peewee.AutoField(unique=True, primary_key=True)
     user_id = peewee.IntegerField(null=False)
     name = peewee.TextField(null=True)
     last_bot_message = peewee.IntegerField(default=0)
