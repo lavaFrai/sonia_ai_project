@@ -14,6 +14,7 @@ from aiogram.types import Message, File
 from peewee import SqliteDatabase
 from playhouse.cockroachdb import CockroachDatabase
 
+from api.MetricsServer import MetricsServer
 from classes.config import Config
 from handlers import handlers_names
 from utils.i18n import I18n
@@ -31,12 +32,13 @@ class Server(metaclass=Singleton):
 
         if self.config.postgresql.use:
             self.db = CockroachDatabase(self.config.postgresql.url)
-            self.logger.warning("Using postgresql db")
+            self.logger.debug("Using postgresql db")
         else:
             self.logger.warning("Using deprecated sqlite db")
             self.db = SqliteDatabase('db.sqlite')
 
         self.bot = aiogram.Bot(self.config.telegram_token, parse_mode=ParseMode.MARKDOWN)
+        self.metrics = MetricsServer()
 
         self.dispatcher = None
 
@@ -50,7 +52,13 @@ class Server(metaclass=Singleton):
             self.logger.debug("Including router " + handler)
             self.dispatcher.include_router(__import__('handlers.' + handler, fromlist=['router']).router)
 
-        await self.dispatcher.start_polling(self.bot)
+        dispatcher_task = asyncio.create_task(self.dispatcher.start_polling(self.bot))
+        metrics_task = asyncio.create_task(self.metrics.run())
+
+        await asyncio.wait(
+            [dispatcher_task, metrics_task],
+            return_when=asyncio.FIRST_EXCEPTION
+        )
 
     def get_logger(self):
         return self.logger
