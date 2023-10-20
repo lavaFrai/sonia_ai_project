@@ -179,6 +179,10 @@ class Server(metaclass=Singleton):
         await self.bot.send_message(self.config.logs_channel, error)
         await self.send_string_as_file(str(traceback), self.config.logs_channel, f'traceback_{case}.txt')
 
+        await data['state'].clear()
+
         from models.user import User
         user, _ = User.get_or_create(id=data['event_from_user'].id)
-        await self.bot.send_message(data['event_chat'].id, user.get_string('panic').replace('%case_id%', str(case)))
+        from keyboards.non_context_action import get_non_context_action
+        await self.bot.send_message(data['event_chat'].id, user.get_string('panic').replace('%case_id%', str(case)),
+                                    reply_markup=await get_non_context_action(user))
