@@ -24,10 +24,9 @@ async def on_start(msg: Message, state: FSMContext):
 
 
 @router.callback_query(CallbackFilter(starts_with='start.language_set'))
-async def on_language_set(cb: CallbackQuery, state: FSMContext):
+async def on_language_set(cb: CallbackQuery, state: FSMContext, user: User):
     await cb.message.delete()
 
-    user = User.get(cb.from_user.id)
     language = cb.data.split('.')[2]
     user.language = language
     user.state = User.State.ready

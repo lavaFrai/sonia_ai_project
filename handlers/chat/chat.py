@@ -115,12 +115,16 @@ async def dialog_next_message(state, msg, message_text):
 
 @router.message(Global.dialog, lambda x: x.content_type in [ContentType.TEXT])
 async def on_new_message(msg: Message, state: FSMContext):
+    server.metrics.chat_messages += 1
+
     text = msg.text
     await dialog_next_message(state, msg, text)
 
 
 @router.message(Global.dialog, lambda x: x.content_type in [ContentType.VOICE])
 async def on_new_message(msg: Message, state: FSMContext):
+    server.metrics.chat_voice_messages += 1
+
     dialog_id = (await state.get_data())['id']
     dialog = ChatDialog.get(id=dialog_id)
     await server.delete_reply_markup_if_possible(msg.chat.id, dialog.last_bot_message)
@@ -135,6 +139,8 @@ async def on_new_message(msg: Message, state: FSMContext):
 
 @router.message(Global.dialog, lambda x: x.content_type in [ContentType.VIDEO_NOTE])
 async def on_new_message(msg: Message, state: FSMContext):
+    server.metrics.chat_video_messages += 1
+
     dialog_id = (await state.get_data())['id']
     dialog = ChatDialog.get(id=dialog_id)
     await server.delete_reply_markup_if_possible(msg.chat.id, dialog.last_bot_message)

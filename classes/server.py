@@ -10,7 +10,7 @@ import openai as openai
 from aiogram import Dispatcher, Router
 from aiogram.enums import ParseMode, ChatAction
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import Message, File
+from aiogram.types import Message, File, InputFile, FSInputFile
 from peewee import SqliteDatabase
 from playhouse.cockroachdb import CockroachDatabase
 
@@ -49,12 +49,22 @@ class Server(metaclass=Singleton):
         openai.api_key = self.config.openai_token
 
         from middlewares.UnhandledErrorMiddleware import UnhandledErrorMiddleware
+        from middlewares.MessagesCounterMiddleware import MessagesCounterMiddleware
+        from middlewares.CallbacksCounterMiddleware import CallbacksCounterMiddleware
+        from middlewares.UserLoaderMiddleware import UserLoaderMiddleware
+
         for handler in handlers_names:
             self.logger.debug("Including router " + handler)
             router: Router = __import__('handlers.' + handler, fromlist=['router']).router
 
             router.message.middleware(UnhandledErrorMiddleware())
             router.callback_query.middleware(UnhandledErrorMiddleware())
+
+            router.message.middleware(MessagesCounterMiddleware())
+            router.callback_query.middleware(CallbacksCounterMiddleware())
+
+            router.message.middleware(UserLoaderMiddleware())
+            router.callback_query.middleware(UserLoaderMiddleware())
 
             self.dispatcher.include_router(router)
 
@@ -82,7 +92,8 @@ class Server(metaclass=Singleton):
             self.logger.error(f"Failed i18n file loading name: {name} locale: {locale}")
             return "<Locale undefined>"
 
-    async def reset_state_message(self, msg: Message):
+    @staticmethod
+    async def reset_state_message(msg: Message):
         from models.user import User
         user = User.get_by_message(msg)
         from keyboards.non_context_action import get_non_context_action
@@ -149,10 +160,25 @@ class Server(metaclass=Singleton):
         pending.pop().cancel()
         return new_message.pop().result()
 
-    async def panic(self, user_id: int, chat_id: int, exception: Exception, data: dict = None, handler=None, event=None):
-        error = f"Unhandled exception case `{uuid.uuid1().hex[:10]}`\n" \
+    async def send_string_as_file(self, string: str, chat_id: int, filename=None):
+        file = await self.create_file()
+        with open(file, 'wb') as f:
+            f.write(str(string).encode('utf8'))
+        await self.bot.send_document(chat_id, FSInputFile(file, filename))
+
+    async def panic(self, traceback, exception: Exception, data: dict = None, handler=None, event=None):
+        case = uuid.uuid1().hex[:10]
+
+        error = f"Unhandled exception case `{case}`\n" \
                 f"---\n" \
-                f"Exception: `{str(exception)}`\n" \
-                f""
+                f"Exception: `{type(exception).__name__}`\n" \
+                f"State: `{data['raw_state']}`\n"\
+                f"User: [{data['event_from_user'].id}](tg://user?id={data['event_from_user'].id})\n"\
+                f"Event: `{type(event).__name__}`\n"
 
         await self.bot.send_message(self.config.logs_channel, error)
+        await self.send_string_as_file(str(traceback), self.config.logs_channel, f'traceback_{case}.txt')
+
+        from models.user import User
+        user, _ = User.get_or_create(id=data['event_from_user'].id)
+        await self.bot.send_message(data['event_chat'].id, user.get_string('panic').replace('%case_id%', str(case)))

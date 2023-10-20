@@ -27,6 +27,8 @@ async def on_extend_started(cb: CallbackQuery, state: FSMContext):
 
 @router.message(Global.image_extending, F.photo)
 async def on_generate(msg: Message, state: FSMContext):
+    server.metrics.images_extended += 1
+
     user = User.get_by_message(msg)
 
     await state.set_state(Global.busy)

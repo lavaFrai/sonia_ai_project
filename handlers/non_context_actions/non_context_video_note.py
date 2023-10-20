@@ -26,6 +26,8 @@ async def on_non_context_voice(msg: Message):
 
 @router.callback_query(F.data.startswith("non_context_video_note.transcribe-audio"), StateFilter(None))
 async def on_non_context_voice_transcribe(cb: CallbackQuery, state: FSMContext):
+    server.metrics.voices_transcribed += 1
+
     user = User.get_by_callback(cb)
 
     source_message = cb.message.reply_to_message

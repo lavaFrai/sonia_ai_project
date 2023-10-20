@@ -25,6 +25,8 @@ async def on_generate_started(cb: CallbackQuery, state: FSMContext):
 
 @router.message(Global.image_generation, F.text)
 async def on_generate(msg: Message, state: FSMContext):
+    server.metrics.images_generated += 1
+
     user = User.get_by_message(msg)
 
     if msg.text is None:

@@ -7,7 +7,13 @@ start: |
   Hi! Welcome to the best AI bot.
   Choose one of the actions or send a text, voice or video message and choose actions with them.
 
-
+panic: |
+  🚨Unhandled error!
+  An unexpected error occurred, we don't know what went wrong, but we have already informed the developer about it. The status of your correspondence has been completely reset to avoid problems.
+  If something serious has happened, you can write to the developers yourself.
+  
+  Developer contacts: [@lava_frai](tg://user?id=929365483)
+  Error case code: `%case_id%`
 
 openai.error.server-unavailable:cancel: [❌ Error, servers are overloaded. Please, try later]
 
