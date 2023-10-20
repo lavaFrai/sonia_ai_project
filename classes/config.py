@@ -22,3 +22,4 @@ class Config:
         self.admin = self.data["admin"]
 
         self.postgresql = PostgresqlConfig(self.data['postgresql'])
+        self.logs_channel = self.data['logs_channel']

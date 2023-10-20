@@ -7,7 +7,7 @@ from pathlib import Path
 import PIL.Image
 import aiogram
 import openai as openai
-from aiogram import Dispatcher
+from aiogram import Dispatcher, Router
 from aiogram.enums import ParseMode, ChatAction
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message, File
@@ -48,9 +48,15 @@ class Server(metaclass=Singleton):
 
         openai.api_key = self.config.openai_token
 
+        from middlewares.UnhandledErrorMiddleware import UnhandledErrorMiddleware
         for handler in handlers_names:
             self.logger.debug("Including router " + handler)
-            self.dispatcher.include_router(__import__('handlers.' + handler, fromlist=['router']).router)
+            router: Router = __import__('handlers.' + handler, fromlist=['router']).router
+
+            router.message.middleware(UnhandledErrorMiddleware())
+            router.callback_query.middleware(UnhandledErrorMiddleware())
+
+            self.dispatcher.include_router(router)
 
         dispatcher_task = asyncio.create_task(self.dispatcher.start_polling(self.bot))
         metrics_task = asyncio.create_task(self.metrics.run())
@@ -91,6 +97,10 @@ class Server(metaclass=Singleton):
         uid = uuid.uuid4().hex
         path = f"downloads/{uid}.{ex}"
         return path
+
+    @staticmethod
+    async def on_error(error):
+        print("ada", error)
 
     async def download_file_by_id(self, file_data, ex='') -> str:
         file = File(file_id=file_data.split(":")[0], file_unique_id=file_data.split(":")[1])
@@ -138,3 +148,11 @@ class Server(metaclass=Singleton):
         new_message, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         pending.pop().cancel()
         return new_message.pop().result()
+
+    async def panic(self, user_id: int, chat_id: int, exception: Exception, data: dict = None, handler=None, event=None):
+        error = f"Unhandled exception case `{uuid.uuid1().hex[:10]}`\n" \
+                f"---\n" \
+                f"Exception: `{str(exception)}`\n" \
+                f""
+
+        await self.bot.send_message(self.config.logs_channel, error)

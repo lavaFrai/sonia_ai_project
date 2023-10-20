@@ -42,4 +42,5 @@ async def on_language_set(cb: CallbackQuery, state: FSMContext):
 
 @router.message(Command("language"))
 async def on_start(msg: Message, state: FSMContext):
+    b = 2 / 0
     await msg.answer(server.get_string("welcome_and_choose_language"), reply_markup=get_language_list_keyboard())

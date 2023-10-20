@@ -1,6 +1,7 @@
 {
   "telegram_token": "<telegram_token>",
   "openai_token": "<openai_token>",
+  "logs_channel": 1000000000,
   "postgresql": {
     "use": true,
     "url": "postgresql://user:password@example.com/dbname"
