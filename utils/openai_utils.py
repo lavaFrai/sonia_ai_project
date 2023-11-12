@@ -1,7 +1,10 @@
 import datetime
+import json
 import time
+from pathlib import Path
 
 import openai
+import aiohttp
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
 from main import server
@@ -20,13 +23,10 @@ async def chatgpt_generate_one_message(system_prompt: str, user_prompt: str) -> 
 
 async def chatgpt_continue_dialog(history: list) -> dict:
     history[0]['content'] = history[0]['content'].replace('%time%', datetime.datetime.now().strftime('%Y %B %d %H:%M:%S'))
-    try:
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo-16k",
-            messages=history
-        )
-    except openai.error.ServiceUnavailableError:
-        return server.get_string('openai.error.server-unavailable')
+    response = await openai.ChatCompletion.acreate(
+        model="gpt-3.5-turbo-16k",
+        messages=history
+    )
     return response["choices"][0]["message"]
 
 
@@ -53,3 +53,25 @@ async def whisper_transcribe_voice_in_video(file: str):
     )
     await server.delete_file(audio_file)
     return response['text']
+
+
+async def openai_text_to_speech(text: str, file: str, voice="shimmer"):
+    from openai import api_requestor
+
+    headers = {
+        "Authorization": "Bearer " + server.config.openai_token,
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "tts-1-hd",
+        "voice": voice,
+        "input": text
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.post('https://api.openai.com/v1/audio/speech', headers=headers, data=json.dumps(data)) as response:
+            with open(file, "wb") as f:
+                while True:
+                    chunk = await response.content.readany()
+                    if not chunk:
+                        break
+                    f.write(chunk)

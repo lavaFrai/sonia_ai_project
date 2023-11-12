@@ -20,6 +20,7 @@ class Config:
         self.telegram_token = self.data["telegram_token"]
         self.openai_token = self.data["openai_token"]
         self.admin = self.data["admin"]
+        self.debug = self.data["debug"]
 
         self.postgresql = PostgresqlConfig(self.data['postgresql'])
         self.logs_channel = self.data['logs_channel']

@@ -57,8 +57,9 @@ class Server(metaclass=Singleton):
             self.logger.debug("Including router " + handler)
             router: Router = __import__('handlers.' + handler, fromlist=['router']).router
 
-            router.message.middleware(UnhandledErrorMiddleware())
-            router.callback_query.middleware(UnhandledErrorMiddleware())
+            if not self.config.debug:
+                router.message.middleware(UnhandledErrorMiddleware())
+                router.callback_query.middleware(UnhandledErrorMiddleware())
 
             router.message.middleware(MessagesCounterMiddleware())
             router.callback_query.middleware(CallbacksCounterMiddleware())
@@ -87,10 +88,10 @@ class Server(metaclass=Singleton):
                 return I18n(locale).get_string(name)
         except KeyError:
             self.logger.error(f"Failed i18n string loading name: {name} locale: {locale}")
-            return "<String undefined>"
+            return f"<String undefined:{name}@{locale}>"
         except FileNotFoundError:
             self.logger.error(f"Failed i18n file loading name: {name} locale: {locale}")
-            return "<Locale undefined>"
+            return f"<Locale undefined:{name}@{locale}>"
 
     @staticmethod
     async def reset_state_message(msg: Message):

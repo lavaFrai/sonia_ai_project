@@ -40,7 +40,8 @@ async def on_generate(msg: Message, state: FSMContext):
         response = openai.Image.acreate(
             prompt=msg.text,
             n=1,
-            size='512x512'
+            size='1024x1024',
+            model="dall-e-3"
         )
         response = await server.await_with_typing_status(response, msg.chat.id, ChatAction.UPLOAD_PHOTO)
         image_url = response['data'][0]['url']

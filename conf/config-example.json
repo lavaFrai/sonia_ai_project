@@ -6,5 +6,6 @@
     "use": true,
     "url": "postgresql://user:password@example.com/dbname"
   },
-  "admin": []
+  "admin": [],
+  "debug": true
 }

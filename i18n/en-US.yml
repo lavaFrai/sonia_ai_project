@@ -17,6 +17,7 @@ panic: |
 
 openai.error.server-unavailable:cancel: [❌ Error, servers are overloaded. Please, try later]
 
+cancel: ❌ Cancel
 busy: ⚠️ Bot is busy now.
 all-canceled: Everything canceled! Now you can choose what you want to do.
 state-reset: Now, you can do something else.
@@ -52,9 +53,11 @@ non-context-action.non_context_voice.transcribe: 📝 Transcribe
 non-context-action.non_context_voice.message-error: Failed to read source message, maybe it was deleted?
 
 non-context-action.non_context_text.action-select: What do you wish to do with this text?
-non-context-action.non_context_text.continue:  ✍ Continue
 non-context-action.non_context_text.additional-action: You can continue or do something else with the received text.
+non-context-action.non_context_text.continue:  ✍ Continue
 non-context-action.non_context_text.reduce: 📃 Reduce
+non-context-action.non_context_text.vocalize: 🔊 Vocalize
+non-context-action.non_context_text.grammar: ✍️ Check grammar
 
 non-context-action.non_context_video_note.action-select: What do you wish to do with this video note?
 non-context-action.non_context_video_note.transcribe-audio: 📝 Transcribe audio
