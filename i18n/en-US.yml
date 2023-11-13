@@ -13,6 +13,7 @@ panic: |
   If something serious has happened, you can write to the developers yourself.
   
   Developer contacts: [@lava_frai](tg://user?id=929365483)
+  Error code: `%error_code%`
   Error case code: `%case_id%`
 
 openai.error.server-unavailable:cancel: [❌ Error, servers are overloaded. Please, try later]
@@ -35,6 +36,7 @@ non-context-action.generate-image.invalid-prompt: |
   It seems that your request was unacceptable, we could not create an image.
   Send new prompt or cancel action.
 non-context-action.generate-image.invalid-prompt-type: Please send *text* prompt for image generation.
+non-context-action.generate-image.rate-limit: Now the system is overloaded. Generation may take a long time.
 
 non-context-action.edit-image: 🖌️ Edit image
 non-context-action.edit-image.prompt_ask: Now send prompt and image for editing.
@@ -68,3 +70,10 @@ dialog-resume: 🔁 Resume dialog
 dialog-started: Dialog started, you can message and bot will answer!
 dialog-stopped: Dialog stopped.
 dialog-resumed: Dialog resumed, you can message and bot will answer, given the previous context!
+
+image-model.dall-e-2: |
+  Image model switched to dall-e-2. This model works faster and produces 4 images per request.
+  /image_model to switch dall-e-3 back.
+image-model.dall-e-3: |
+  Image model switched to dall-e-3. This model works slower but has a much higher image quality.
+  /image_model to switch dall-e-2 back.

@@ -176,7 +176,7 @@ class Server(metaclass=Singleton):
 
         error = f"Unhandled exception case `{case}`\n" \
                 f"---\n" \
-                f"Exception: `{type(exception).__name__}`\n" \
+                f"Exception: `{type(exception).__name__} {exception.args}`\n" \
                 f"State: `{data['raw_state']}`\n"\
                 f"User: [{data['event_from_user'].id}](tg://user?id={data['event_from_user'].id})\n"\
                 f"Event: `{type(event).__name__}`\n"
@@ -189,5 +189,6 @@ class Server(metaclass=Singleton):
         from models.user import User
         user, _ = User.get_or_create(id=data['event_from_user'].id)
         from keyboards.non_context_action import get_non_context_action
-        await self.bot.send_message(data['event_chat'].id, user.get_string('panic').replace('%case_id%', str(case)),
+        await self.bot.send_message(data['event_chat'].id, user.get_string('panic').replace('%case_id%', str(case))
+                                    .replace('%error_code%', type(exception).__name__),
                                     reply_markup=await get_non_context_action(user))
