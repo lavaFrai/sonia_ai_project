@@ -24,4 +24,6 @@ async def on_command(msg: Message, state: FSMContext):
                     f"Platform: {platform.platform()}\n\n"
                     f"Platform version: {platform.version()}\n\n"
                     f"Uptime: {int(uptime() // (60 * 60 * 24))}d {int((uptime() // (60 * 60)) % 24)}h {int((uptime() // 60) % 60)}m {int(uptime() % 60)}s\n\n"
-                    f"RAM: {psutil.virtual_memory().used // (1024*1024)}M/{psutil.virtual_memory().total // (1024*1024)}M used\n\n")
+                    f"RAM: {psutil.virtual_memory().used // (1024*1024)}M/{psutil.virtual_memory().total // (1024*1024)}M used\n\n",
+
+                    parse_mode=None)
