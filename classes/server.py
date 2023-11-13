@@ -15,6 +15,7 @@ from peewee import SqliteDatabase
 from playhouse.cockroachdb import CockroachDatabase
 
 from api.MetricsServer import MetricsServer
+from classes.commands import CommandsRegistrator
 from classes.config import Config
 from handlers import handlers_names
 from utils.i18n import I18n
@@ -68,6 +69,9 @@ class Server(metaclass=Singleton):
             router.callback_query.middleware(UserLoaderMiddleware())
 
             self.dispatcher.include_router(router)
+
+        self.logger.debug("Registering commands")
+        await CommandsRegistrator().update(self.bot)
 
         dispatcher_task = asyncio.create_task(self.dispatcher.start_polling(self.bot))
         metrics_task = asyncio.create_task(self.metrics.run())

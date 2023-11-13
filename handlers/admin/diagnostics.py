@@ -16,12 +16,12 @@ router = Router()
 async def on_command(msg: Message, state: FSMContext):
     user = User.get_by_message(msg)
 
-    await msg.reply(f"ℹ️ Bot diagnostics data:\n\n"
-                    f"System: {platform.machine()}\n"
-                    f"Python: {sys.version}\n"
-                    f"Processor: {platform.processor()}\n"
-                    f"CPU count: {psutil.cpu_count()}\n"
-                    f"Platform: {platform.platform()}\n"
-                    f"Platform version: {platform.version()}\n"
-                    f"Uptime: {int(uptime() // (60 * 60 * 24))}d {int((uptime() // (60 * 60)) % 24)}h {int((uptime() // 60) % 60)}m {int(uptime() % 60)}s\n"
-                    f"RAM: {psutil.virtual_memory().used // (1024*1024)}M/{psutil.virtual_memory().total // (1024*1024)}M used\n")
+    await msg.reply(f"ℹ️ Bot diagnostics data:\n\n\n"
+                    f"System: {platform.machine()}\n\n"
+                    f"Python: {sys.version}\n\n"
+                    f"Processor: {platform.processor()}\n\n"
+                    f"CPU count: {psutil.cpu_count()}\n\n"
+                    f"Platform: {platform.platform()}\n\n"
+                    f"Platform version: {platform.version()}\n\n"
+                    f"Uptime: {int(uptime() // (60 * 60 * 24))}d {int((uptime() // (60 * 60)) % 24)}h {int((uptime() // 60) % 60)}m {int(uptime() % 60)}s\n\n"
+                    f"RAM: {psutil.virtual_memory().used // (1024*1024)}M/{psutil.virtual_memory().total // (1024*1024)}M used\n\n")
