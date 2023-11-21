@@ -12,7 +12,7 @@ from main import server
 
 async def chatgpt_generate_one_message(system_prompt: str, user_prompt: str) -> str:
     response = await openai.ChatCompletion.acreate(
-        model="gpt-3.5-turbo-16k",
+        model="gpt-3.5-turbo-1106",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
@@ -24,7 +24,7 @@ async def chatgpt_generate_one_message(system_prompt: str, user_prompt: str) -> 
 async def chatgpt_continue_dialog(history: list) -> dict:
     history[0]['content'] = history[0]['content'].replace('%time%', datetime.datetime.now().strftime('%Y %B %d %H:%M:%S'))
     response = await openai.ChatCompletion.acreate(
-        model="gpt-3.5-turbo-16k",
+        model="gpt-3.5-turbo-1106",
         messages=history
     )
     return response["choices"][0]["message"]
