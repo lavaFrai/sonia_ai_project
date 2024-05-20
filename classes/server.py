@@ -20,6 +20,7 @@ from classes.config import Config
 from handlers import handlers_names
 from utils.i18n import I18n
 from utils.singleton import Singleton
+import utils.gemini.client as gemini
 
 
 class Server(metaclass=Singleton):
@@ -48,6 +49,8 @@ class Server(metaclass=Singleton):
         self.dispatcher = Dispatcher(storage=SQLiteStorage())
 
         openai.api_key = self.config.openai_token
+        gemini.api_key = self.config.gemini_token
+        gemini.base_url = self.config.gemini_base_url
 
         from middlewares.UnhandledErrorMiddleware import UnhandledErrorMiddleware
         from middlewares.MessagesCounterMiddleware import MessagesCounterMiddleware

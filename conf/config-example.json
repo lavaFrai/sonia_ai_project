@@ -1,6 +1,8 @@
 {
   "telegram_token": "<telegram_token>",
   "openai_token": "<openai_token>",
+  "gemini_token": "<gemini_token>",
+  "gemini_base_url": "<gemini_base_url>",
   "logs_channel": 1000000000,
   "postgresql": {
     "use": true,

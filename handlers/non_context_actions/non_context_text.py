@@ -1,5 +1,4 @@
 import openai
-import tiktoken as tiktoken
 from aiogram import Router, F
 from aiogram.enums import ContentType, ChatAction
 from aiogram.filters import StateFilter
@@ -21,45 +20,6 @@ async def on_non_context_text(msg: Message):
 
     await msg.reply(user.get_string("non-context-action.non_context_text.action-select"),
                     reply_markup=await get_non_context_text_keyboard(msg.text, user))
-
-
-def num_tokens_from_string(string: str, encoding_name: str) -> int:
-    """Returns the number of tokens in a text string.
-        For text-davinci-003 encoding is p50k_base, for newest cl100k_base"""
-    encoding = tiktoken.get_encoding(encoding_name)
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
-
-
-@router.callback_query(F.data.startswith("non_context_text.continue"), StateFilter(None))
-async def on_non_context_text_continue(cb: CallbackQuery, state: FSMContext):
-    user = User.get_by_callback(cb)
-
-    source_message = cb.message.reply_to_message
-    if source_message is None:
-        await cb.answer()
-        await cb.message.answer(user.get_string("non-context-action.non_context_voice.message-error"))
-        return
-    else:
-        await state.set_state(Global.busy)
-        try:
-            message_length_in_tokens = num_tokens_from_string(source_message.text, "p50k_base")
-            # await source_message.reply(text=str(message_length_in_tokens))
-            completion = openai.Completion.acreate(
-                model="text-davinci-003",
-                prompt=source_message.text,
-                max_tokens=4097 - message_length_in_tokens,
-                temperature=0.3
-            )
-            completion = await server.await_with_typing_status(completion, cb.message.chat.id)
-
-            text = source_message.text + completion["choices"][0]["text"]
-            await source_message.reply(text=text)
-            # await new_msg.reply(text=server.get_string("non-context-action.non_context_text.additional-action"),
-            #                     reply_markup=await get_non_context_text_keyboard(text))
-        finally:
-            await state.clear()
-            await cb.answer()
 
 
 @router.callback_query(F.data.startswith("non_context_text.reduce"), StateFilter(None))

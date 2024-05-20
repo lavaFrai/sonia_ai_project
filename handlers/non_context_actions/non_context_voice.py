@@ -10,6 +10,7 @@ from main import server
 from models.user import User
 from states import Global
 from utils.file_data import FileData
+from utils.gemini.voice import gemini_transcribe_voice
 from utils.openai_utils import whisper_transcribe_voice
 
 router = Router()
@@ -39,7 +40,7 @@ async def on_non_context_voice_transcribe(cb: CallbackQuery, state: FSMContext):
         try:
             file = await server.download_file_by_id(FileData(source_message.voice).get_data(), "mp3")
 
-            new_msg = await source_message.reply(await whisper_transcribe_voice(open(file, 'rb')))
+            new_msg = await source_message.reply(await gemini_transcribe_voice(open(file, 'rb')))
 
             await new_msg.reply(user.get_string("non-context-action.non_context_text.action-select"),
                                 reply_markup=await get_non_context_text_keyboard(new_msg.text, user))

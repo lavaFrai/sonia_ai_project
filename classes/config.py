@@ -19,6 +19,8 @@ class Config:
 
         self.telegram_token = self.data["telegram_token"]
         self.openai_token = self.data["openai_token"]
+        self.gemini_token = self.data["gemini_token"]
+        self.gemini_base_url = self.data["gemini_base_url"]
         self.admin = self.data["admin"]
         self.debug = self.data["debug"]
 
