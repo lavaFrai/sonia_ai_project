@@ -16,6 +16,8 @@ async def get_non_context_voice_keyboard(file_data, user):
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=user.get_string("non-context-action.non_context_voice.transcribe"),
                     callback_data="non_context_voice.transcribe")
+    keyboard.button(text=user.get_string("non-context-action.non_context_voice.download"),
+                    callback_data="non_context_voice.download")
     return keyboard.as_markup()
 
 
@@ -23,6 +25,8 @@ async def get_non_context_video_note_keyboard(file_data, user):
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=user.get_string("non-context-action.non_context_video_note.transcribe-audio"),
                     callback_data="non_context_video_note.transcribe-audio")
+    keyboard.button(text=user.get_string("non-context-action.non_context_video_note.download"),
+                    callback_data="non_context_video_note.download")
     return keyboard.as_markup()
 
 

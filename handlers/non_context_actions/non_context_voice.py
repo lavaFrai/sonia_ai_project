@@ -3,7 +3,7 @@ from aiogram import Router, F
 from aiogram.enums import ContentType
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, InputFile, FSInputFile
 
 from keyboards.non_context_action import get_non_context_voice_keyboard, get_non_context_text_keyboard
 from main import server
@@ -48,3 +48,23 @@ async def on_non_context_voice_transcribe(cb: CallbackQuery, state: FSMContext):
             await state.clear()
             await cb.answer()
             await server.delete_file(file)
+
+
+@router.callback_query(F.data.startswith("non_context_voice.download"), StateFilter(None))
+async def on_non_context_voice_download(cb: CallbackQuery, state: FSMContext):
+    user = User.get_by_callback(cb)
+
+    source_message = cb.message.reply_to_message
+    if source_message is None:
+        await cb.answer()
+        await cb.message.answer(user.get_string("non-context-action.non_context_voice.message-error"))
+        return
+
+    await state.set_state(Global.busy)
+    file = await server.download_file_by_id(FileData(source_message.voice).get_data(), "mp3")
+    try:
+        await cb.message.answer_document(FSInputFile(file, filename=file))
+    finally:
+        await server.delete_file(file)
+        await state.clear()
+        await cb.answer()

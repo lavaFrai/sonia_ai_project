@@ -52,6 +52,7 @@ non-context-action.extend-image.in-process: Extending image...
 
 non-context-action.non_context_voice.action-select: What do you wish to do with this voice?
 non-context-action.non_context_voice.transcribe: 📝 Transcribe
+non-context-action.non_context_voice.download: 📥 Download
 non-context-action.non_context_voice.message-error: Failed to read source message, maybe it was deleted?
 
 non-context-action.non_context_text.action-select: What do you wish to do with this text?
@@ -63,6 +64,7 @@ non-context-action.non_context_text.grammar: ✍️ Check grammar
 
 non-context-action.non_context_video_note.action-select: What do you wish to do with this video note?
 non-context-action.non_context_video_note.transcribe-audio: 📝 Transcribe audio
+non-context-action.non_context_video_note.download: 📥 Download
 
 dialog-start: 💬 Start dialog
 dialog-stop: ❌ Stop dialog

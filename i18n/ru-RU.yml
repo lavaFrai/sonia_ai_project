@@ -52,6 +52,7 @@ non-context-action.extend-image.in-process: Изображение расшир�
 
 non-context-action.non_context_voice.action-select: Что вы хотите сделать с этим голосовым сообщением?
 non-context-action.non_context_voice.transcribe: 📝 Распознать речь
+non-context-action.non_context_voice.download: 📥 Скачать
 non-context-action.non_context_voice.message-error: Не удалось прочитать исходное сообщение, возможно, оно было удалено?
 
 non-context-action.non_context_text.action-select: Что вы хотите сделать с этим текстом?
@@ -63,6 +64,7 @@ non-context-action.non_context_text.grammar: ✍️ Исправить ошиб�
 
 non-context-action.non_context_video_note.action-select: Что вы хотите сделать с этим кружочком?
 non-context-action.non_context_video_note.transcribe-audio: 📝 Распознать речь
+non-context-action.non_context_video_note.download: 📥 Скачать
 
 dialog-start: 💬 Начать диалог
 dialog-stop: ❌ Остановить диалог
