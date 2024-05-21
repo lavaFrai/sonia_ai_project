@@ -19,6 +19,7 @@ from classes.commands import CommandsRegistrator
 from classes.config import Config
 from handlers import handlers_names
 from utils.i18n import I18n
+from utils.middleware.album_middleware import MediaGroupMiddleware
 from utils.singleton import Singleton
 import utils.gemini.client as gemini
 
@@ -51,6 +52,7 @@ class Server(metaclass=Singleton):
         openai.api_key = self.config.openai_token
         gemini.api_key = self.config.gemini_token
         gemini.base_url = self.config.gemini_base_url
+        gemini.proxy = self.config.gemini_proxy
 
         from middlewares.UnhandledErrorMiddleware import UnhandledErrorMiddleware
         from middlewares.MessagesCounterMiddleware import MessagesCounterMiddleware
@@ -66,6 +68,7 @@ class Server(metaclass=Singleton):
                 router.callback_query.middleware(UnhandledErrorMiddleware())
 
             router.message.middleware(MessagesCounterMiddleware())
+            router.message.middleware(MediaGroupMiddleware())
             router.callback_query.middleware(CallbacksCounterMiddleware())
 
             router.message.middleware(UserLoaderMiddleware())

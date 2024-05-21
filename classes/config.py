@@ -21,6 +21,7 @@ class Config:
         self.openai_token = self.data["openai_token"]
         self.gemini_token = self.data["gemini_token"]
         self.gemini_base_url = self.data["gemini_base_url"]
+        self.gemini_proxy = self.data["gemini_proxy"]
         self.admin = self.data["admin"]
         self.debug = self.data["debug"]
 

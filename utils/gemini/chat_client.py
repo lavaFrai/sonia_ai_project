@@ -4,27 +4,6 @@ import json
 from .client import ApiClient
 
 
-def build_text_message(message: str, role: str):
-    return {
-        "role": role,
-        "parts": {
-            "text": message
-        }
-    }
-
-
-def build_file_message(file: bytes, mime_type: str, role: str):
-    return {
-        "role": role,
-        "parts": {
-            "inlineData": {
-                "mimeType": mime_type,
-                "data": base64.b64encode(file).decode("utf-8")
-            }
-        }
-    }
-
-
 class ChatClient:
     def __init__(self, history=None, system_instruction=""):
         if history is None:
@@ -38,26 +17,43 @@ class ChatClient:
         self.api = ApiClient()
 
     async def send_message(self, message: str) -> str:
-        self.history.append(build_text_message(message, "user"))
+        self.history.append(self.build_text_message(message, "user"))
 
-        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent", self.build_request_body_by_history())
+        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent",
+                                          self.build_request_body_by_history())
         response_message = response["candidates"][0]["content"]["parts"][0]["text"]
-        self.history.append(build_text_message(response_message, "model"))
+        self.history.append(self.build_text_message(response_message, "model"))
 
         return response_message
 
     async def send_media_message(self, file: bytes, mime_type: str) -> str:
-        self.history.append(build_file_message(file, mime_type, "user"))
+        self.history.append(self.build_file_message(file, mime_type, "user"))
 
-        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent", self.build_request_body_by_history())
+        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent",
+                                          self.build_request_body_by_history())
         try:
             response_message = response["candidates"][0]["content"]["parts"][0]["text"]
         except KeyError:
             print(json.dumps(response, indent=4))
-            exit(1)
-        self.history.append(build_text_message(response_message, "model"))
+            raise RuntimeError("Response message error")
+        self.history.append(self.build_text_message(response_message, "model"))
 
         return response_message
+
+    async def send_multiple_messages(self, messages: list) -> str:
+        self.history.extend(messages)
+
+        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent",
+                                          self.build_request_body_by_history())
+        try:
+            response_message = response["candidates"][0]["content"]["parts"][0]["text"]
+        except KeyError:
+            print(json.dumps(response, indent=4))
+            raise RuntimeError("Response message error")
+        self.history.append(self.build_text_message(response_message, "model"))
+
+        return response_message
+
 
     def build_request_body_by_history(self):
         return {
@@ -83,6 +79,30 @@ class ChatClient:
             "systemInstruction": {
                 "parts": {
                     "text": self.system_instruction
+                }
+            }
+        }
+
+    def get_history(self):
+        return self.history
+
+    @staticmethod
+    def build_text_message(message: str, role: str):
+        return {
+            "role": role,
+            "parts": {
+                "text": message
+            }
+        }
+
+    @staticmethod
+    def build_file_message(file: bytes, mime_type: str, role: str):
+        return {
+            "role": role,
+            "parts": {
+                "inlineData": {
+                    "mimeType": mime_type,
+                    "data": base64.b64encode(file).decode("utf-8")
                 }
             }
         }

@@ -6,8 +6,10 @@ class CommandsRegistrator:
     commands = {
         "start": "Clear context and restart bot",
         "language": "Change bot language",
-        "image_model": "Choose image generator",
+        # "image_model": "Choose image generator",
         "diagnostics": "Debug stats info",
+        "dialog": "Start dialog",
+        "stop_dialog": "Stop dialog",
     }
 
     async def update(self, bot: Bot):

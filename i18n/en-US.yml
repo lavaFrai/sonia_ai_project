@@ -66,12 +66,18 @@ non-context-action.non_context_video_note.action-select: What do you wish to do 
 non-context-action.non_context_video_note.transcribe-audio: 📝 Transcribe audio
 non-context-action.non_context_video_note.download: 📥 Download
 
+unsupported-media-type: |
+  Unsupported media type: `%type%`
+
 dialog-start: 💬 Start dialog
 dialog-stop: ❌ Stop dialog
 dialog-resume: 🔁 Resume dialog
-dialog-started: Dialog started, you can message and bot will answer!
+dialog-started: |
+  Dialog started, you can message and bot will answer!
+  To stop the dialog, use /stop_dialog
 dialog-stopped: Dialog stopped.
 dialog-resumed: Dialog resumed, you can message and bot will answer, given the previous context!
+dialog-too-long: It seems that the dialog is too long. It was automatically stopped. You can start a new dialog. (Message size exceeded context length - 4,5MB)
 
 image-model.dall-e-2: |
   Image model switched to dall-e-2. This model works faster and produces 4 images per request.

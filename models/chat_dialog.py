@@ -1,3 +1,5 @@
+import json
+
 import peewee
 
 from main import server
@@ -11,13 +13,14 @@ class ChatDialog(peewee.Model):
     user_id = peewee.IntegerField(null=False)
     name = peewee.TextField(null=True)
     last_bot_message = peewee.IntegerField(default=0)
+    history = peewee.TextField(default="[]")
 
     class Meta:
         database = server.db
 
     @staticmethod
     async def get_dialog_history(dialog_id):
-        history = ChatMessage.select(ChatMessage.text, ChatMessage.role)\
+        """history = ChatMessage.select(ChatMessage.text, ChatMessage.role)\
             .where(ChatMessage.dialog_id == dialog_id)\
             .order_by(ChatMessage.id)
         history_json = []
@@ -26,4 +29,12 @@ class ChatDialog(peewee.Model):
                 "role": message.role,
                 "content": message.text
             })
-        return history_json
+        return history_json"""
+
+        return json.loads(ChatDialog.get(id=dialog_id).history)
+
+    @staticmethod
+    async def save_dialog_history(dialog_id, history):
+        dialog = ChatDialog.get(id=dialog_id)
+        dialog.history = json.dumps(history)
+        dialog.save()
