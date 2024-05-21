@@ -9,7 +9,7 @@ from keyboards.non_context_action import get_non_context_text_keyboard
 from main import server
 from models.user import User
 from states import Global
-from utils.openai_utils import chatgpt_generate_one_message, openai_text_to_speech
+from utils.gemini.chat_client import gemini_generate_one_message
 
 router = Router()
 
@@ -37,7 +37,7 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext):
             # message_length_in_tokens = num_tokens_from_string(source_message.text, "p50k_base")
             # new_msg = await source_message.reply(text=user.get_string("generation-in-progress"))
 
-            text = chatgpt_generate_one_message(
+            text = gemini_generate_one_message(
                 "You should shorten the texts that are sent to you, leaving only the most important in the text. "
                 "The result must be in the same language as the original.",
                 source_message.text
@@ -64,7 +64,7 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext, user:
             # message_length_in_tokens = num_tokens_from_string(source_message.text, "p50k_base")
             # new_msg = await source_message.reply(text=server.get_string("generation-in-progress"))
 
-            text = chatgpt_generate_one_message(
+            text = gemini_generate_one_message(
                 "Correct the spelling, syntax and grammar of this text in source language of message. "
                 "Write anything and it will correct your Spelling and Grammar.",
                 source_message.text
@@ -78,7 +78,7 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext, user:
             await cb.answer()
 
 
-@router.callback_query(F.data.startswith("non_context_text.vocalize"), StateFilter(None))
+"""@router.callback_query(F.data.startswith("non_context_text.vocalize"), StateFilter(None))
 async def on_non_context_text_vocalize(cb: CallbackQuery, state: FSMContext, user: User):
     source_message = cb.message.reply_to_message
     if source_message is None:
@@ -96,4 +96,4 @@ async def on_non_context_text_vocalize(cb: CallbackQuery, state: FSMContext, use
     # await server.await_with_typing_status(upload_speech, cb.message.chat.id, ChatAction.UPLOAD_VOICE)
 
     await cb.answer()
-    await state.clear()
+    await state.clear()"""

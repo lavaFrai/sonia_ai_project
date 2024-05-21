@@ -12,7 +12,6 @@ from utils.file_data import FileData
 from moviepy.editor import VideoFileClip
 
 from utils.gemini.voice import gemini_transcribe_voice
-from utils.openai_utils import whisper_transcribe_voice, whisper_transcribe_voice_in_video
 
 router = Router()
 
@@ -81,4 +80,3 @@ async def on_non_context_video_note_download(cb: CallbackQuery, state: FSMContex
         await server.delete_file(file)
         await state.clear()
         await cb.answer()
-

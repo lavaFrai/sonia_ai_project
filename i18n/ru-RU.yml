@@ -55,6 +55,9 @@ non-context-action.non_context_voice.transcribe: 📝 Распознать ре�
 non-context-action.non_context_voice.download: 📥 Скачать
 non-context-action.non_context_voice.message-error: Не удалось прочитать исходное сообщение, возможно, оно было удалено?
 
+non-context-action.non_context_photo.action-select: Что вы хотите сделать с этим фото?
+non-context-action.non_context_photo.describe: 📝 Описать
+
 non-context-action.non_context_text.action-select: Что вы хотите сделать с этим текстом?
 non-context-action.non_context_text.additional-action: Вы можете продолжить или сделать что-то еще с полученным текстом.
 non-context-action.non_context_text.continue: ✍ Продолжить

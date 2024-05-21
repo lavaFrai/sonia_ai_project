@@ -42,3 +42,11 @@ async def get_non_context_text_keyboard(data, user):
                     callback_data="non_context_text.check_grammar")
     keyboard.adjust(2)
     return keyboard.as_markup()
+
+
+async def get_non_context_photo_keyboard(data, user):
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text=user.get_string("non-context-action.non_context_photo.describe"),
+                    callback_data="non_context_photo.describe")
+    keyboard.adjust(2)
+    return keyboard.as_markup()

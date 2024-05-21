@@ -106,3 +106,8 @@ class ChatClient:
                 }
             }
         }
+
+
+async def gemini_generate_one_message(system_prompt: str, user_prompt: str) -> str:
+    client = ChatClient(system_instruction=system_prompt)
+    return await client.send_message(user_prompt)

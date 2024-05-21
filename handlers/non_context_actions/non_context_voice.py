@@ -11,7 +11,6 @@ from models.user import User
 from states import Global
 from utils.file_data import FileData
 from utils.gemini.voice import gemini_transcribe_voice
-from utils.openai_utils import whisper_transcribe_voice
 
 router = Router()
 

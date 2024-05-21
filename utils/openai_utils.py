@@ -10,6 +10,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from main import server
 
 
+"""
 async def chatgpt_generate_one_message(system_prompt: str, user_prompt: str) -> str:
     response = await openai.ChatCompletion.acreate(
         model="gpt-3.5-turbo-1106",
@@ -75,3 +76,4 @@ async def openai_text_to_speech(text: str, file: str, voice="shimmer"):
                     if not chunk:
                         break
                     f.write(chunk)
+"""

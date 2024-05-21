@@ -55,6 +55,9 @@ non-context-action.non_context_voice.transcribe: 📝 Transcribe
 non-context-action.non_context_voice.download: 📥 Download
 non-context-action.non_context_voice.message-error: Failed to read source message, maybe it was deleted?
 
+non-context-action.non_context_photo.action-select: What do you wish to do with this photo?
+non-context-action.non_context_photo.describe: 📝 Describe
+
 non-context-action.non_context_text.action-select: What do you wish to do with this text?
 non-context-action.non_context_text.additional-action: You can continue or do something else with the received text.
 non-context-action.non_context_text.continue:  ✍ Continue
