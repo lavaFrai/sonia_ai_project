@@ -2,11 +2,13 @@ import asyncio
 from typing import List
 
 import aiogram.exceptions
+import docx2txt
+import pypandoc
 from aiogram import Router, F
 from aiogram.enums import ChatAction, ContentType, ParseMode
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile
 
 from keyboards.chat_dialog_keyboards import get_dialog_stop_keyboard, get_dialog_resume_keyboard
 from main import server
@@ -20,6 +22,7 @@ from utils.file_data import FileData
 from utils.filter import CallbackFilter
 from utils.gemini.chat_client import ChatClient
 from utils.gemini.client import PayloadToLargeException
+import PyPDF2
 
 router = Router()
 
@@ -38,7 +41,8 @@ async def on_command(msg: Message, state: FSMContext):
     dialog_id = await start_dialog(msg.from_user.id)
 
     await state.set_data({"id": dialog_id})
-    await msg.reply(user.get_string("dialog-started"), parse_mode=None)#, reply_markup=await get_dialog_stop_keyboard(user))
+    await msg.reply(user.get_string("dialog-started"),
+                    parse_mode=None)  #, reply_markup=await get_dialog_stop_keyboard(user))
 
 
 @router.callback_query(CallbackFilter(data='dialog.start'), StateFilter(None))
@@ -48,7 +52,8 @@ async def on_start_dialog(cb: CallbackQuery, state: FSMContext):
     await state.set_state(Global.dialog)
     dialog_id = await start_dialog(cb.from_user.id)
 
-    await cb.message.answer(user.get_string("dialog-started"), parse_mode=None)# , reply_markup=await get_dialog_stop_keyboard(user))
+    await cb.message.answer(user.get_string("dialog-started"),
+                            parse_mode=None)  # , reply_markup=await get_dialog_stop_keyboard(user))
 
     await state.set_data({"id": dialog_id})
     await cb.answer()
@@ -73,7 +78,8 @@ async def on_stop_dialog(cb: CallbackQuery, state: FSMContext):
 
     await state.clear()
     await cb.answer()
-    await cb.message.reply(user.get_string("dialog-stopped"))# , reply_markup=await get_dialog_resume_keyboard(dialog_id, user))
+    await cb.message.reply(
+        user.get_string("dialog-stopped"))  # , reply_markup=await get_dialog_resume_keyboard(dialog_id, user))
     await server.reset_state_message_no_reply(cb.message.chat.id, user)
 
 
@@ -86,15 +92,45 @@ async def on_resume_dialog(cb: CallbackQuery, state: FSMContext):
     dialog_id = int(cb.data.split('.')[2])
     dialog = ChatDialog.get(id=dialog_id)
     await state.set_data({'id': str(dialog_id)})
-    created_message = await cb.message.reply(user.get_string('dialog-resumed'))# , reply_markup=await get_dialog_stop_keyboard(user))
+    created_message = await cb.message.reply(
+        user.get_string('dialog-resumed'))  # , reply_markup=await get_dialog_stop_keyboard(user))
     dialog.last_bot_message = created_message.message_id
     dialog.save()
     await cb.answer()
 
 
 async def get_system_message():
-    return open("conf/system-prompt.txt", "r").read()
+    return open("conf/system-prompt.txt", "r", encoding='utf8').read()
 
+
+allowed_mime = [
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+    "audio/wav",
+    "audio/mp3",
+    "audio/aiff",
+    "audio/aac",
+    "audio/ogg",
+    "audio/flac",
+    "text/plain",
+    "text/html",
+    "text/css",
+    "text/javascript",
+    "application/x-javascript",
+    "text/x-typescript",
+    "text/csv",
+    "text/markdown",
+    "application/json",
+    "text/xml",
+    "application/rtf",
+    "text/rtf",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]
 
 @router.message(Global.dialog, lambda x: x)
 async def on_new_message(msg: Message, state: FSMContext, album: List[Message], user: User):
@@ -107,7 +143,11 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
 
     dialog_id = (await state.get_data())['id']
     history = await ChatDialog.get_dialog_history(dialog_id)
-    chat = ChatClient(history=history, system_instruction=await get_system_message())
+    chat = ChatClient(
+        history=history,
+        system_instruction=await get_system_message(),
+        tools=[]
+    )
 
     for message in album:
         if message.caption:
@@ -133,6 +173,51 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
             with open(photo_file, "rb") as f:
                 messages.append(chat.build_file_message(f.read(), "image/jpeg", "user"))
             await server.delete_file(photo_file)
+
+        elif message.content_type == ContentType.DOCUMENT:
+            mime_type = message.document.mime_type
+            if mime_type is None:
+                await message.reply(user.get_string("unsupported-media-type").replace("%type%", message.document.mime_type))
+                await state.set_state(Global.dialog)
+                return
+            if mime_type not in allowed_mime:
+                await message.reply(user.get_string("unsupported-media-type").replace("%type%", message.document.mime_type))
+                await state.set_state(Global.dialog)
+                return
+
+            document_file = await server.download_file_by_id(FileData(message.document).get_data(), message.document.file_name)
+
+            if mime_type == "application/pdf":
+                pdf_file = open(document_file, "rb")
+                pdf_reader = PyPDF2.PdfReader(pdf_file)
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text()
+                messages.append(chat.build_text_message(text, "user"))
+                pdf_file.close()
+
+                new_file = await server.create_file("txt")
+                with open(new_file, "w", encoding='utf8') as f:
+                    f.write(text)
+                await server.delete_file(document_file)
+                document_file = new_file
+                mime_type = "text/plain"
+
+            if mime_type == "application/msword" or mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                document_file = await server.download_file_by_id(FileData(message.document).get_data(), "docx")
+                new_file = await server.create_file("txt")
+                with open(document_file, "rb") as input_f:
+                    with open(new_file, "w", encoding='utf8') as output_f:
+                        doc = docx2txt.process(input_f)
+                        output_f.write(doc)
+
+                await server.delete_file(document_file)
+                document_file = new_file
+                mime_type = "text/plain"
+
+            with open(document_file, "rb") as f:
+                messages.append(chat.build_file_message(f.read(), mime_type, "user"))
+            # await server.delete_file(document_file)
 
         else:
             await message.reply(user.get_string("unsupported-media-type").replace("%type%", message.content_type))

@@ -5,55 +5,36 @@ from .client import ApiClient
 
 
 class ChatClient:
-    def __init__(self, history=None, system_instruction=""):
+    def __init__(self, history=None, system_instruction="", tools=None):
         if history is None:
             self.history = []
         else:
             self.history = history
 
+        if tools is None:
+            self.tools = []
+        else:
+            self.tools = tools
+
         self.system_instruction = system_instruction
 
-        self.model = "gemini-1.5-pro-latest"
+        self.model = "gemini-1.5-flash-latest"
         self.api = ApiClient()
 
     async def send_message(self, message: str) -> str:
-        self.history.append(self.build_text_message(message, "user"))
-
-        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent",
-                                          self.build_request_body_by_history())
-        response_message = response["candidates"][0]["content"]["parts"][0]["text"]
-        self.history.append(self.build_text_message(response_message, "model"))
+        response_message = await self.send_and_process_response([self.build_text_message(message, "user")])
 
         return response_message
 
     async def send_media_message(self, file: bytes, mime_type: str) -> str:
-        self.history.append(self.build_file_message(file, mime_type, "user"))
-
-        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent",
-                                          self.build_request_body_by_history())
-        try:
-            response_message = response["candidates"][0]["content"]["parts"][0]["text"]
-        except KeyError:
-            print(json.dumps(response, indent=4))
-            raise RuntimeError("Response message error")
-        self.history.append(self.build_text_message(response_message, "model"))
+        response_message = await self.send_and_process_response([self.build_file_message(file, mime_type, "user")])
 
         return response_message
 
     async def send_multiple_messages(self, messages: list) -> str:
-        self.history.extend(messages)
-
-        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent",
-                                          self.build_request_body_by_history())
-        try:
-            response_message = response["candidates"][0]["content"]["parts"][0]["text"]
-        except KeyError:
-            print(json.dumps(response, indent=4))
-            raise RuntimeError("Response message error")
-        self.history.append(self.build_text_message(response_message, "model"))
+        response_message = await self.send_and_process_response(messages)
 
         return response_message
-
 
     def build_request_body_by_history(self):
         return {
@@ -80,7 +61,8 @@ class ChatClient:
                 "parts": {
                     "text": self.system_instruction
                 }
-            }
+            },
+            "tools": self.get_available_tools()
         }
 
     def get_history(self):
@@ -106,6 +88,58 @@ class ChatClient:
                 }
             }
         }
+
+    @staticmethod
+    def build_function_result_message(result: str):
+        return {
+            "role": "user",
+            "parts": {
+                "text": result
+            }
+        }
+
+    def get_available_tools(self):
+        return [
+            {
+                "functionDeclarations": {
+                    "name": tool.get_name(),
+                    "description": tool.get_description(),
+                    "parameters": tool.get_parameters(),
+                }
+            } for tool in self.tools
+        ]
+
+    async def send_and_process_response(self, messages: list) -> str:
+        self.history.extend(messages)
+        response = await self.api.request(f"/v1beta/models/{self.model}:generateContent", self.build_request_body_by_history())
+        print(json.dumps(response, indent=4))
+        if "candidates" not in response or len(response["candidates"]) == 0:
+            raise Exception("No candidates in response")
+
+        candidate = response["candidates"][0]
+        content = candidate["content"]
+        self.history.append(content)
+
+        # Process message
+
+        response_message = ""
+
+        for part in content["parts"]:
+            if "text" in part:
+                response_message += part["text"] + "\n"
+
+            if "functionCall" in part:
+                function_call = part["functionCall"]
+                tool_name = function_call["name"]
+                tool_params = function_call["args"]
+
+                for tool in self.tools:
+                    if tool.get_name() == tool_name:
+                        tool_result = await tool(tool_params)
+                        response_message += (await self.send_and_process_response([self.build_function_result_message(tool_result)])) + "\n"
+
+        return response_message
+        # raise Exception("Unknown content type")
 
 
 async def gemini_generate_one_message(system_prompt: str, user_prompt: str) -> str:

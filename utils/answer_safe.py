@@ -9,7 +9,7 @@ def split_string(text, chunk_size=4096):
     return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
 
 
-async def answer_safe(message: Message, text: str, reply_markup=None, parse_mode=ParseMode.MARKDOWN_V2):
+async def answer_safe(message: Message, text: str, reply_markup=None, parse_mode=ParseMode.MARKDOWN):
     parts = split_string(text)
 
     for part in parts:

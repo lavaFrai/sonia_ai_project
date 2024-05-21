@@ -24,6 +24,9 @@ class ApiClient:
                 resp = await response.text()
                 if response.status == 413:
                     raise PayloadToLargeException()
+                elif response.status != 200:
+                    print(resp)
+                    raise Exception(f"Failed to make request: {response.status}")
                 return await response.json()
 
     async def push(self, path, body=""):

@@ -19,5 +19,4 @@ Use telegram html markdown for text formatting. Allowed entities:
 <blockquote>blockquote</blockquote>
 Never use other formatting entities.
 
-Current date and time is: %time%
 Link for user donations site: https://www.donationalerts.com/r/lavafrai
