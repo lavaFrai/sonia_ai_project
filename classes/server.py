@@ -3,6 +3,7 @@ import logging
 import os.path
 import uuid
 from pathlib import Path
+from urllib.parse import urlparse
 
 import PIL.Image
 import aiogram
@@ -10,22 +11,24 @@ import openai as openai
 from aiogram import Dispatcher, Router
 from aiogram.enums import ParseMode, ChatAction
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import Message, File, InputFile, FSInputFile
-from peewee import SqliteDatabase
+from aiogram.types import Message, File, FSInputFile
+from peewee import SqliteDatabase, PostgresqlDatabase, Database
 from playhouse.cockroachdb import CockroachDatabase
 
 from api.MetricsServer import MetricsServer
 from classes.commands import CommandsRegistrator
 from classes.config import Config
 from handlers import handlers_names
+from middlewares.database_check_middleware import DatabaseCheckMiddleware
 from utils.i18n import I18n
-from utils.middleware.album_middleware import MediaGroupMiddleware
+from middlewares.album_middleware import MediaGroupMiddleware
 from utils.singleton import Singleton
 import utils.gemini.client as gemini
 
 
 class Server(metaclass=Singleton):
     def __init__(self):
+        self.db: Database = None
         self.logger = logging.getLogger(__name__)
         self.logger.info("initializing server")
         self.logger.debug(self)
@@ -33,19 +36,13 @@ class Server(metaclass=Singleton):
 
         self.config = Config()
 
-        if self.config.postgresql.use:
-            self.db = CockroachDatabase(self.config.postgresql.url)
-            self.logger.debug("Using postgresql db")
-        else:
-            self.logger.warning("Using deprecated sqlite db")
-            self.db = SqliteDatabase('db.sqlite')
-
         self.bot = aiogram.Bot(self.config.telegram_token, parse_mode=ParseMode.MARKDOWN)
         self.metrics = MetricsServer()
 
         self.dispatcher = None
 
     async def run(self):
+        await self.reconnect_db()
         from utils.aiogram_storage import SQLiteStorage
         self.dispatcher = Dispatcher(storage=SQLiteStorage())
 
@@ -69,7 +66,9 @@ class Server(metaclass=Singleton):
 
             router.message.middleware(MessagesCounterMiddleware())
             router.message.middleware(MediaGroupMiddleware())
-            router.callback_query.middleware(CallbacksCounterMiddleware())
+            router.message.middleware(DatabaseCheckMiddleware())
+            router.callback_query.outer_middleware(DatabaseCheckMiddleware())
+            router.callback_query.outer_middleware(CallbacksCounterMiddleware())
 
             router.message.middleware(UserLoaderMiddleware())
             router.callback_query.middleware(UserLoaderMiddleware())
@@ -86,6 +85,22 @@ class Server(metaclass=Singleton):
             [dispatcher_task, metrics_task],
             return_when=asyncio.FIRST_EXCEPTION
         )
+
+    async def reconnect_db(self):
+        if self.db != None:
+            self.db.close()
+            self.db.connect()
+            return
+
+        if self.config.postgresql.use:
+            url = urlparse(self.config.postgresql.url)
+            self.db = PostgresqlDatabase(
+                self.config.postgresql.url
+            )
+            self.logger.debug("Using postgresql db")
+        else:
+            self.logger.warning("Using deprecated sqlite db")
+            self.db = SqliteDatabase('db.sqlite')
 
     def get_logger(self):
         return self.logger

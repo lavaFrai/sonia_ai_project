@@ -1,6 +1,8 @@
+import asyncio
 import json
 from typing import Union, Dict, Optional, List, Tuple, AnyStr, Any, cast
 
+import peewee
 from aiogram.fsm.state import State
 from models.state import State as DbState
 from aiogram.fsm.storage.base import BaseStorage, StorageKey, StateType
@@ -25,8 +27,15 @@ class SQLiteStorage(BaseStorage):
             row.save()
 
     async def get_state(self, key: StorageKey) -> Optional[str]:
-        key = self.key_builder.build(key, "state")
-        data = DbState.get_or_none(key=key)
+        _key = self.key_builder.build(key, "state")
+        try:
+            data = DbState.get_or_none(key=_key)
+        except BaseException as e:
+            await asyncio.sleep(0.1)
+            from main import server
+            await server.reconnect_db()
+            server.logger.warning("Reconnecting database, reason: " + str(e))
+            return await self.get_state(key)
         if data is None:
             return None
         return data.value
