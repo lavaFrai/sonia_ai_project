@@ -132,19 +132,25 @@ allowed_mime = [
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]
 
+
 @router.message(Global.dialog, lambda x: x)
 async def on_new_message(msg: Message, state: FSMContext, album: List[Message], user: User):
     server.metrics.chat_voice_messages += 1
 
     await state.set_state(Global.busy)
     await server.bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
+    dialog_id = (await state.get_data())['id']
+
+    last_message = ChatDialog.select(ChatDialog.last_bot_message).where(ChatDialog.id == dialog_id)[0].last_bot_message
+    if last_message is not None:
+        try:
+            await server.bot.edit_message_reply_markup(chat_id=msg.chat.id, message_id=last_message, reply_markup=None)
+        except Exception:
+            pass
 
     messages = []
 
-    dialog_id = (await state.get_data())['id']
-    history = await ChatDialog.get_dialog_history(dialog_id)
     chat = ChatClient(
-        history=history,
         system_instruction=await get_system_message(),
         tools=[]
     )
@@ -177,15 +183,18 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
         elif message.content_type == ContentType.DOCUMENT:
             mime_type = message.document.mime_type
             if mime_type is None:
-                await message.reply(user.get_string("unsupported-media-type").replace("%type%", message.document.mime_type))
+                await message.reply(
+                    user.get_string("unsupported-media-type").replace("%type%", message.document.mime_type))
                 await state.set_state(Global.dialog)
                 return
             if mime_type not in allowed_mime:
-                await message.reply(user.get_string("unsupported-media-type").replace("%type%", message.document.mime_type))
+                await message.reply(
+                    user.get_string("unsupported-media-type").replace("%type%", message.document.mime_type))
                 await state.set_state(Global.dialog)
                 return
 
-            document_file = await server.download_file_by_id(FileData(message.document).get_data(), message.document.file_name)
+            document_file = await server.download_file_by_id(FileData(message.document).get_data(),
+                                                             message.document.file_name)
 
             if mime_type == "application/pdf":
                 pdf_file = open(document_file, "rb")
@@ -224,8 +233,13 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
             await state.set_state(Global.dialog)
             return
 
+    await ChatDialog.add_messages(dialog_id, messages)
+    history = await ChatDialog.get_dialog_history(dialog_id)
+    chat.set_history(history)
+
     try:
-        response = await chat.send_multiple_messages(messages)
+        response = await chat.request_response()
+        await ChatDialog.add_messages(dialog_id, chat.get_new_messages())
     except PayloadToLargeException:
         await msg.reply(user.get_string("dialog-too-long"))
         await state.clear()
@@ -237,5 +251,11 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
 
     await ChatDialog.save_dialog_history(dialog_id, chat.get_history())
 
-    await answer_safe(msg, response, parse_mode=ParseMode.HTML)
+    msg = await answer_safe(msg, response.replace("* **", "**").replace("**", "*"),
+                            parse_mode=ParseMode.MARKDOWN,
+                            reply_markup=await get_dialog_stop_keyboard(user)
+                            )
+
+    ChatDialog.update(last_bot_message=msg.message_id).where(ChatDialog.id == dialog_id).execute()
+
     await state.set_state(Global.dialog)

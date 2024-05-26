@@ -11,6 +11,8 @@ class ChatClient:
         else:
             self.history = history
 
+        self.new_messages = []
+
         if tools is None:
             self.tools = []
         else:
@@ -18,7 +20,7 @@ class ChatClient:
 
         self.system_instruction = system_instruction
 
-        self.model = "gemini-1.5-flash-latest"
+        self.model = "gemini-1.5-pro-latest"
         self.api = ApiClient()
 
     async def send_message(self, message: str) -> str:
@@ -35,6 +37,9 @@ class ChatClient:
         response_message = await self.send_and_process_response(messages)
 
         return response_message
+
+    def set_history(self, history):
+        self.history = history
 
     def build_request_body_by_history(self):
         return {
@@ -109,6 +114,9 @@ class ChatClient:
             } for tool in self.tools
         ]
 
+    async def request_response(self):
+        return await self.send_and_process_response([])
+
     async def send_and_process_response(self, messages: list) -> str:
         self.history.extend(messages)
         response = await self.api.request(f"/v1beta/models/{self.model}:generateContent", self.build_request_body_by_history())
@@ -119,6 +127,7 @@ class ChatClient:
         candidate = response["candidates"][0]
         content = candidate["content"]
         self.history.append(content)
+        self.new_messages.append(content)
 
         # Process message
 
@@ -140,6 +149,11 @@ class ChatClient:
 
         return response_message
         # raise Exception("Unknown content type")
+
+    def get_new_messages(self):
+        n = self.new_messages.copy()
+        self.new_messages = []
+        return n
 
 
 async def gemini_generate_one_message(system_prompt: str, user_prompt: str) -> str:

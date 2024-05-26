@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -13,4 +15,8 @@ router = Router()
 async def on_cancel(msg: Message, state: FSMContext):
     user = User.get_by_message(msg)
 
-    await msg.reply(user.get_string("busy"))
+    busy_message = await msg.reply(user.get_string("busy"))
+    await asyncio.sleep(5)
+    await msg.delete()
+    await busy_message.delete()
+

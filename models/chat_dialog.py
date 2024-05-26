@@ -13,7 +13,6 @@ class ChatDialog(peewee.Model):
     user_id = peewee.IntegerField(null=False)
     name = peewee.TextField(null=True)
     last_bot_message = peewee.IntegerField(default=0)
-    history = peewee.TextField(default="[]")
 
     class Meta:
         database = server.db
@@ -31,10 +30,25 @@ class ChatDialog(peewee.Model):
             })
         return history_json"""
 
-        return json.loads(ChatDialog.get(id=dialog_id).history)
+        return list(map(
+            lambda x: json.loads(x.text),
+            ChatMessage.select().where(ChatMessage.dialog_id == dialog_id)
+        ))
 
     @staticmethod
     async def save_dialog_history(dialog_id, history):
         dialog = ChatDialog.get(id=dialog_id)
         dialog.history = json.dumps(history)
         dialog.save()
+
+    @staticmethod
+    async def add_message(dialog_id, message):
+        ChatMessage.create(
+            dialog_id=dialog_id,
+            text=json.dumps(message)
+        )
+
+    @staticmethod
+    async def add_messages(dialog_id, messages):
+        for message in messages:
+            await ChatDialog.add_message(dialog_id, message)

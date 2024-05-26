@@ -18,6 +18,7 @@ async def get_non_context_voice_keyboard(file_data, user):
                     callback_data="non_context_voice.transcribe")
     keyboard.button(text=user.get_string("non-context-action.non_context_voice.download"),
                     callback_data="non_context_voice.download")
+    keyboard.adjust(1)
     return keyboard.as_markup()
 
 
@@ -27,6 +28,7 @@ async def get_non_context_video_note_keyboard(file_data, user):
                     callback_data="non_context_video_note.transcribe-audio")
     keyboard.button(text=user.get_string("non-context-action.non_context_video_note.download"),
                     callback_data="non_context_video_note.download")
+    keyboard.adjust(1)
     return keyboard.as_markup()
 
 
@@ -40,7 +42,7 @@ async def get_non_context_text_keyboard(data, user):
     #                 callback_data="non_context_text.vocalize")
     keyboard.button(text=user.get_string("non-context-action.non_context_text.grammar"),
                     callback_data="non_context_text.check_grammar")
-    keyboard.adjust(2)
+    keyboard.adjust(1)
     return keyboard.as_markup()
 
 
@@ -48,5 +50,5 @@ async def get_non_context_photo_keyboard(data, user):
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=user.get_string("non-context-action.non_context_photo.describe"),
                     callback_data="non_context_photo.describe")
-    keyboard.adjust(2)
+    keyboard.adjust(1)
     return keyboard.as_markup()

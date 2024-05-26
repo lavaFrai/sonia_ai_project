@@ -8,7 +8,7 @@ from aiogram.types import TelegramObject, Message
 
 from states import Global
 
-DEFAULT_DELAY = 1
+DEFAULT_DELAY = 0.5
 
 
 class MediaGroupMiddleware(BaseMiddleware):

@@ -1,7 +1,7 @@
 {
   "telegram_token": "<telegram_token>",
   "openai_token": "<openai_token>",
-  "gemini_token": "<gemini_token>",
+  "gemini_token": ["<gemini_token>"],
   "gemini_base_url": "<gemini_base_url>",
   "gemini_proxy": "<http_proxy>",
   "logs_channel": 1000000000,
