@@ -202,8 +202,8 @@ class Server(metaclass=Singleton):
                 f"User: [{data['event_from_user'].id}](tg://user?id={data['event_from_user'].id})\n"\
                 f"Event: `{type(event).__name__}`\n"
 
-        await self.bot.send_message(self.config.logs_channel, error)
-        await self.send_string_as_file(str(traceback), self.config.logs_channel, f'traceback_{case}.txt')
+        # await self.bot.send_message(self.config.logs_channel, error)
+        # await self.send_string_as_file(str(traceback), self.config.logs_channel, f'traceback_{case}.txt')
 
         await data['state'].clear()
 

@@ -5,6 +5,7 @@ from aiogram.types import BotCommand
 class CommandsRegistrator:
     commands = {
         "start": "Clear context and restart bot",
+        "menu": "Open bot menu",
         "language": "Change bot language",
         # "image_model": "Choose image generator",
         "diagnostics": "Debug stats info",

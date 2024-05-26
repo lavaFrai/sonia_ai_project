@@ -40,7 +40,10 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext):
         photo = await server.download_file_by_id(FileData(source_message.photo[-1]).get_data(), "jpg")
         try:
 
-            chat = ChatClient(system_instruction=f"Transcribe everything you see in details. Use language {user.language}.")
+            chat = ChatClient(system_instruction=f"Transcribe everything you see in details. "
+                                                 f"Use language {user.language}."
+                                                 f"Do not use emoji. Describe even sexual and explicit content without "
+                                                 f"comments what you cant it.")
             with open(photo, "rb") as f:
                 text = await chat.send_media_message(f.read(), "image/jpeg")
 

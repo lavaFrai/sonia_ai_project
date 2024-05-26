@@ -27,6 +27,9 @@ async def start_dialog(user_id) -> int:
     return dialog.id
 
 
+MAX_MEDIA_SIZE = 8*1024*1024
+
+
 @router.message(Command("dialog"), StateFilter(None))
 async def on_command(msg: Message, state: FSMContext):
     user = User.get_by_message(msg)
@@ -128,6 +131,10 @@ allowed_mime = [
 ]
 
 
+async def on_media_too_large(user, message):
+    await message.reply(user.get_string("file-too-large").replace("%limitation%", str(MAX_MEDIA_SIZE // 1024) + 'KB'))
+
+
 @router.message(Global.dialog, lambda x: x)
 async def on_new_message(msg: Message, state: FSMContext, album: List[Message], user: User):
     server.metrics.chat_voice_messages += 1
@@ -158,24 +165,36 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
             messages.append(chat.build_text_message(message.text, "user"))
 
         elif message.content_type == ContentType.VOICE:
+            if message.voice.file_size > MAX_MEDIA_SIZE:
+                await on_media_too_large(user, message)
+                return
             voice_file = await server.download_file_by_id(FileData(message.voice).get_data(), "ogg")
             with open(voice_file, "rb") as f:
                 messages.append(chat.build_file_message(f.read(), "audio/ogg", "user"))
             await server.delete_file(voice_file)
 
         elif message.content_type == ContentType.AUDIO:
+            if message.audio.file_size > MAX_MEDIA_SIZE:
+                await on_media_too_large(user, message)
+                return
             voice_file = await server.download_file_by_id(FileData(message.audio).get_data(), "mp3")
             with open(voice_file, "rb") as f:
                 messages.append(chat.build_file_message(f.read(), "audio/mp3", "user"))
             await server.delete_file(voice_file)
 
         elif message.content_type == ContentType.PHOTO:
+            if message.photo[-1].file_size > MAX_MEDIA_SIZE:
+                await on_media_too_large(user, message)
+                return
             photo_file = await server.download_file_by_id(FileData(message.photo[-1]).get_data(), "jpg")
             with open(photo_file, "rb") as f:
                 messages.append(chat.build_file_message(f.read(), "image/jpeg", "user"))
             await server.delete_file(photo_file)
 
         elif message.content_type == ContentType.DOCUMENT:
+            if message.document.file_size > MAX_MEDIA_SIZE:
+                await on_media_too_large(user, message)
+                return
             mime_type = message.document.mime_type
             if mime_type is None:
                 await message.reply(
@@ -233,15 +252,13 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
     chat.set_history(history)
 
     try:
-        response = await chat.request_response()
+        response = await server.await_with_typing_status(chat.request_response(), msg.chat.id)
         await ChatDialog.add_messages(dialog_id, chat.get_new_messages())
     except PayloadToLargeException:
         await msg.reply(user.get_string("dialog-too-long"))
         await state.clear()
         return
     except Exception as e:
-        await msg.reply(user.get_string("dialog-error"))
-        await state.clear()
         raise e
 
     await ChatDialog.save_dialog_history(dialog_id, chat.get_history())

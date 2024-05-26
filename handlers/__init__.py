@@ -1,5 +1,6 @@
 handlers_names = [
     'start',
+    'menu',
     'help',
     'cancel',
     'busy',

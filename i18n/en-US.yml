@@ -5,7 +5,14 @@ welcome_and_choose_language: |
 language_has_been_set: The language has been set to English.
 start: |
   Hi! Welcome to the best AI bot.
-  Choose one of the actions or send a text, voice or video message and choose actions with them.
+
+  Select one of the actions from the list below.
+  You can also send voice message 🔊 , video note 📹 , photo 🖼️ or text 📄 , then you can choose an additional action with them.
+
+menu: |
+  Here is list of able actions.
+  
+  You can also send voice message 🔊 , video note 📹 , photo 🖼️ or text 📄 , then you can choose an additional action with them.
 
 panic: |
   🚨Unhandled error!
@@ -72,14 +79,20 @@ non-context-action.non_context_video_note.download: 📥 Download
 unsupported-media-type: |
   Unsupported media type: `%type%`
 
+file-too-large: The file is too large, it was not possible to add it. There is a %limitation% restriction for this type of files.
+
 dialog-start: 💬 Start dialog
 dialog-stop: ❌ Stop dialog
 dialog-resume: 🔁 Resume dialog
-dialog-started: |
-  Dialog started, you can message and bot will answer!
-  To stop the dialog, use /stop_dialog
 dialog-stopped: Dialog stopped.
 dialog-resumed: Dialog resumed, you can message and bot will answer, given the previous context!
+dialog-started: |
+  The dialogue has started, you can send messages, and the bot will respond!
+
+  The following media types are supported in dialogs: photos, audio (including voice messages), docx and pdf documents (to be extracted as text).
+
+  To stop the dialog, send /stop_dialog. Don't forget to do this when you're done chatting.
+
 dialog-too-long: It seems that the dialog is too long. It was automatically stopped. You can start a new dialog. (Message size exceeded context length - 4,5MB)
 
 image-model.dall-e-2: |

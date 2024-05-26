@@ -27,5 +27,7 @@ class UnhandledErrorMiddleware(BaseMiddleware):
             server.logger.error(f"Unhandled exception <{type(e).__name__}> in {handler} while handling event <{event}>. Data: <{data}>")
             if isinstance(event, aiogram.types.Message) or isinstance(event, aiogram.types.CallbackQuery):
                 await server.panic(tb, e, data=data, handler=handler, event=event)
+
+            raise e
         else:
             return result

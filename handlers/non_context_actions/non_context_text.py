@@ -45,7 +45,7 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext):
             text = await server.await_with_typing_status(text, cb.message.chat.id)
 
             # await new_msg.delete()
-            await source_message.reply(text=text, reply_markup=await get_non_context_text_keyboard(text, user))
+            await source_message.reply(text=text)
         finally:
             await state.clear()
             await cb.answer()
@@ -72,7 +72,7 @@ async def on_non_context_text_reduce(cb: CallbackQuery, state: FSMContext, user:
             text = await server.await_with_typing_status(text, cb.message.chat.id)
 
             # await new_msg.delete()
-            await source_message.reply(text=text, reply_markup=await get_non_context_text_keyboard(text, user))
+            await source_message.reply(text=text)
         finally:
             await state.clear()
             await cb.answer()
