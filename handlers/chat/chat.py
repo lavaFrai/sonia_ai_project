@@ -1,28 +1,23 @@
-import asyncio
 from typing import List
 
-import aiogram.exceptions
+import PyPDF2
 import docx2txt
-import pypandoc
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.enums import ChatAction, ContentType, ParseMode
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, FSInputFile
+from aiogram.types import Message, CallbackQuery
 
-from keyboards.chat_dialog_keyboards import get_dialog_stop_keyboard, get_dialog_resume_keyboard
+from keyboards.chat_dialog_keyboards import get_dialog_stop_keyboard
 from main import server
 from models.chat_dialog import ChatDialog
-from models.chat_message import ChatMessage
 from models.user import User
 from states import Global
-from utils import openai_utils
 from utils.answer_safe import answer_safe
 from utils.file_data import FileData
 from utils.filter import CallbackFilter
 from utils.gemini.chat_client import ChatClient
 from utils.gemini.client import PayloadToLargeException
-import PyPDF2
 
 router = Router()
 
