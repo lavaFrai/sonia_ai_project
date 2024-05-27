@@ -131,7 +131,8 @@ allowed_mime = [
 ]
 
 
-async def on_media_too_large(user, message):
+async def on_media_too_large(user, state, message):
+    await state.set_state(Global.dialog)
     await message.reply(user.get_string("file-too-large").replace("%limitation%", str(MAX_MEDIA_SIZE // 1024) + 'KB'))
 
 
@@ -166,7 +167,7 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
 
         elif message.content_type == ContentType.VOICE:
             if message.voice.file_size > MAX_MEDIA_SIZE:
-                await on_media_too_large(user, message)
+                await on_media_too_large(user, state, message)
                 return
             voice_file = await server.download_file_by_id(FileData(message.voice).get_data(), "ogg")
             with open(voice_file, "rb") as f:
@@ -175,7 +176,7 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
 
         elif message.content_type == ContentType.AUDIO:
             if message.audio.file_size > MAX_MEDIA_SIZE:
-                await on_media_too_large(user, message)
+                await on_media_too_large(user, state, message)
                 return
             voice_file = await server.download_file_by_id(FileData(message.audio).get_data(), "mp3")
             with open(voice_file, "rb") as f:
@@ -184,7 +185,7 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
 
         elif message.content_type == ContentType.PHOTO:
             if message.photo[-1].file_size > MAX_MEDIA_SIZE:
-                await on_media_too_large(user, message)
+                await on_media_too_large(user, state, message)
                 return
             photo_file = await server.download_file_by_id(FileData(message.photo[-1]).get_data(), "jpg")
             with open(photo_file, "rb") as f:
@@ -193,7 +194,7 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
 
         elif message.content_type == ContentType.DOCUMENT:
             if message.document.file_size > MAX_MEDIA_SIZE:
-                await on_media_too_large(user, message)
+                await on_media_too_large(user, state, message)
                 return
             mime_type = message.document.mime_type
             if mime_type is None:
