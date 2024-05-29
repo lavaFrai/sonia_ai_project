@@ -94,6 +94,7 @@ dialog-started: |
   To stop the dialog, send /stop_dialog. Don't forget to do this when you're done chatting.
 
 dialog-too-long: It seems that the dialog is too long. It was automatically stopped. You can start a new dialog. (Message size exceeded context length - 4,5MB)
+dialog-no-candidates: ⚠️ It seems that the neural network has not found an answer to this question. You can continue the dialogue if it does not cause problems. If the errors continue, stop the dialog using /stop_dialog and start a new one.
 
 image-model.dall-e-2: |
   Image model switched to dall-e-2. This model works faster and produces 4 images per request.

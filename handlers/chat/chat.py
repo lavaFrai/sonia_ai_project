@@ -259,6 +259,10 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
         await msg.reply(user.get_string("dialog-too-long"))
         await state.clear()
         return
+    except ChatClient.ZeroCandidatesException:
+        await msg.reply(user.get_string("dialog-no-candidates"))
+        await state.set_state(Global.dialog)
+        return
     except Exception as e:
         raise e
 
