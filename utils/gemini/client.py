@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import aiohttp
+from aiohttp import ClientProxyConnectionError
 
 api_key = []
 global current_api_key
@@ -23,23 +24,27 @@ class ApiClient:
     async def request(self, path, body="", attempts=5):
         url = self.base_url + path + "?key=" + await self.next_api_key()
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, data=json.dumps(body), proxy=self.proxy) as response:
-                resp = await response.text()
-                if response.status == 413:
-                    raise PayloadToLargeException()
-                elif response.status == 429:
-                    await asyncio.sleep(5)
-                    return await self.request(path, body)
-                elif response.status == 500:
-                    print(resp)
-                    if attempts == 0:
+            try:
+                async with session.post(url, data=json.dumps(body), proxy=self.proxy) as response:
+                    resp = await response.text()
+                    if response.status == 413:
+                        raise PayloadToLargeException()
+                    elif response.status == 429:
+                        await asyncio.sleep(5)
+                        return await self.request(path, body)
+                    elif response.status == 500:
+                        print(resp)
+                        if attempts == 0:
+                            raise Exception(f"Failed to make request: {response.status}")
+                        await asyncio.sleep(5)
+                        return await self.request(path, body, attempts - 1)
+                    elif response.status != 200:
+                        print(resp)
                         raise Exception(f"Failed to make request: {response.status}")
-                    await asyncio.sleep(5)
-                    return await self.request(path, body, attempts - 1)
-                elif response.status != 200:
-                    print(resp)
-                    raise Exception(f"Failed to make request: {response.status}")
-                return await response.json()
+                    return await response.json()
+            except ClientProxyConnectionError as e:
+                await asyncio.sleep(1)
+                return await self.request(path, body, attempts - 1)
 
     async def push(self, path, body=""):
         url = self.base_url + path + "?key=" + await self.next_api_key()
