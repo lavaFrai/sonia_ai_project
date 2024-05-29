@@ -117,12 +117,14 @@ class ChatClient:
     async def request_response(self):
         return await self.send_and_process_response([])
 
-    async def send_and_process_response(self, messages: list) -> str:
+    async def send_and_process_response(self, messages: list, attempts: int = 5) -> str:
         self.history.extend(messages)
         response = await self.api.request(f"/v1beta/models/{self.model}:generateContent", self.build_request_body_by_history())
         print(json.dumps(response, indent=4))
         if "candidates" not in response or len(response["candidates"]) == 0:
-            raise Exception("No candidates in response")
+            if attempts <= 0:
+                raise Exception("No candidates in response")
+            return await self.send_and_process_response(messages, attempts - 1)
 
         candidate = response["candidates"][0]
         content = candidate["content"]
