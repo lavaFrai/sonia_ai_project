@@ -126,7 +126,7 @@ class ChatClient:
         print(json.dumps(response, indent=4))
         if "candidates" not in response or len(response["candidates"]) == 0:
             if attempts <= 0:
-                raise self.NoCandidatesException("No candidates in response")
+                raise ChatClient.ZeroCandidatesException("No candidates in response")
             return await self.send_and_process_response(messages, attempts - 1)
 
         candidate = response["candidates"][0]
