@@ -11,7 +11,7 @@ from utils.migration import do_migration_for
 
 @do_migration_for(server.db)
 class User(peewee.Model):
-    id = peewee.IntegerField(unique=True)
+    id = peewee.BigIntegerField(unique=True)
     language = peewee.TextField(default="en-US")
     state = peewee.IntegerField(default=0)
     subscription_expires = peewee.TimestampField(default=0)
