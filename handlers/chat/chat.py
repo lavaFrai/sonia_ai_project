@@ -239,8 +239,14 @@ async def on_new_message(msg: Message, state: FSMContext, album: List[Message], 
                 document_file = new_file
                 mime_type = "text/plain"
 
-            with open(document_file, "rb") as f:
-                messages.append(chat.build_file_message(f.read(), mime_type, "user"))
+            if mime_type == "text/plain":
+                with open(document_file, 'r', encoding='utf8') as f:
+                    message_file_text = f.read()
+            else:
+                with open(document_file, "rb") as f:
+                    message_file_text = f.read()
+                    
+            messages.append(chat.build_file_message(message_file_text, mime_type, "user"))
             # await server.delete_file(document_file)
 
         else:
