@@ -1,3 +1,5 @@
+from asyncio import subprocess
+
 from aiogram import Router, F
 from aiogram.enums import ContentType
 from aiogram.filters import StateFilter
@@ -9,7 +11,6 @@ from main import server
 from models.user import User
 from states import Global
 from utils.file_data import FileData
-from moviepy.editor import VideoFileClip
 
 from utils.gemini.voice import gemini_transcribe_voice
 
@@ -38,13 +39,11 @@ async def on_non_context_voice_transcribe(cb: CallbackQuery, state: FSMContext):
     await state.set_state(Global.busy)
     try:
         video_file = await server.download_file_by_id(FileData(source_message.video_note).get_data(), "mp4")
-        video = VideoFileClip(video_file)
         audio_file = await server.create_file(ex='mp3')
-        audio = video.audio
-        audio.write_audiofile(audio_file)
 
-        audio.close()
-        video.close()
+        command = f"ffmpeg -i {video_file} -ab 160k -ac 2 -ar 44100 -vn {audio_file}"
+        proc = await subprocess.create_subprocess_shell(command)
+        await proc.wait()
 
         text = await server.await_with_typing_status(
             gemini_transcribe_voice(open(audio_file, 'rb')),
