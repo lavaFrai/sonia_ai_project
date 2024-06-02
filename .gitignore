@@ -2,3 +2,4 @@
 /conf/config.json
 .idea
 /downloads/
+**/__pycache__/
